@@ -1513,8 +1513,10 @@ document.getElementById("campo-nome").addEventListener("input", desenharPedido);
     btnGrupo.removeAttribute("target");
     btnGrupo.onclick = function(e){
       e.preventDefault();
+      // Se a loja está na internet, o convite já leva o endereço dela! 🌍
+      const endereco = location.protocol.indexOf("http") === 0 ? "\n👉 " + location.href : "";
       const convite = "Vem ver a vitrine da " + (config.nomeLoja || "Girls Shop") +
-                      "! Coisinhas lindas te esperando 🛍️💜";
+                      "! Coisinhas lindas te esperando 🛍️💜" + endereco;
       if(navigator.clipboard && navigator.clipboard.writeText){
         navigator.clipboard.writeText(convite).then(function(){
           mostrarToast("Convite copiado! Mande pras amigas 💜");
