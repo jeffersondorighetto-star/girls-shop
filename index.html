@@ -1502,6 +1502,8 @@ document.getElementById("campo-nome").addEventListener("input", desenharPedido);
   document.getElementById("nome-loja").textContent = config.nomeLoja || "Girls Shop";
   document.title = (config.nomeLoja || "Girls Shop") + " — Vitrine";
 
+  // Endereço oficial da vitrine na internet 🌍 (o convite sempre leva ele!)
+  const ENDERECO_LOJA = "https://jeffersondorighetto-star.github.io/girls-shop/";
   // Botão flutuante = portal pro grupo da loja! 👥
   // Com grupo configurado: abre o convite do grupo.
   // Sem grupo: copia um convite fofinho pra mandar pras amigas.
@@ -1513,8 +1515,8 @@ document.getElementById("campo-nome").addEventListener("input", desenharPedido);
     btnGrupo.removeAttribute("target");
     btnGrupo.onclick = function(e){
       e.preventDefault();
-      // Se a loja está na internet, o convite já leva o endereço dela! 🌍
-      const endereco = location.protocol.indexOf("http") === 0 ? "\n👉 " + location.href : "";
+      // O convite SEMPRE leva o endereço oficial da vitrine! 🌍
+      const endereco = "\n👉 " + ENDERECO_LOJA;
       const convite = "Vem ver a vitrine da " + (config.nomeLoja || "Girls Shop") +
                       "! Coisinhas lindas te esperando 🛍️💜" + endereco;
       if(navigator.clipboard && navigator.clipboard.writeText){

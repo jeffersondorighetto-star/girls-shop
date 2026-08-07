@@ -351,6 +351,8 @@ label{font-weight:700;display:block;margin:10px 0 4px}
       <input type="text" id="cfgNiver1" placeholder="Ex: 15/03" maxlength="5" inputmode="numeric">
       <label>🎂 Aniversário da sócia 2 (DD/MM)</label>
       <input type="text" id="cfgNiver2" placeholder="Ex: 22/07" maxlength="5" inputmode="numeric">
+      <label>🎂 Aniversário da sócia 3 (DD/MM)</label>
+      <input type="text" id="cfgNiver3" placeholder="Ex: 08/11" maxlength="5" inputmode="numeric">
       <button class="btn-lilas" style="width:100%;margin-top:14px;padding:12px" id="btnSalvarCfg">💾 Salvar configurações</button>
     </div>
     <div class="cartao">
@@ -1463,6 +1465,7 @@ function renderConfig(){
   document.getElementById('cfgMeta').value = cfg.metaMensal ? (cfg.metaMensal/100).toFixed(2) : '';
   document.getElementById('cfgNiver1').value = (cfg.aniversarios && cfg.aniversarios[0]) || '';
   document.getElementById('cfgNiver2').value = (cfg.aniversarios && cfg.aniversarios[1]) || '';
+  document.getElementById('cfgNiver3').value = (cfg.aniversarios && cfg.aniversarios[2]) || '';
 }
 
 // Confere se a data de aniversário é válida (DD/MM)
@@ -1481,13 +1484,14 @@ document.getElementById('btnSalvarCfg').onclick = ()=>{
   const meta = paraCentavos(document.getElementById('cfgMeta').value);
   const n1 = document.getElementById('cfgNiver1').value.trim();
   const n2 = document.getElementById('cfgNiver2').value.trim();
+  const n3 = document.getElementById('cfgNiver3').value.trim();
   const grupo = document.getElementById('cfgGrupo').value.trim();
   const nuvem = document.getElementById('cfgNuvem').value.trim();
 
   if(!nome){ toast('A loja precisa de um nome! 🏪'); return; }
   if(whats && whats.length < 10){ toast('WhatsApp estranho... usem DDD + número 📲'); return; }
   if(document.getElementById('cfgMeta').value && meta === null){ toast('Meta estranha 🤗'); return; }
-  if(!niverValido(n1) || !niverValido(n2)){ toast('Aniversário no formato DD/MM, tipo 15/03 🎂'); return; }
+  if(!niverValido(n1) || !niverValido(n2) || !niverValido(n3)){ toast('Aniversário no formato DD/MM, tipo 15/03 🎂'); return; }
   if(grupo && !/^https:\/\/(chat\.)?whatsapp\.com\/.+/.test(grupo)){
     toast('Esse link não parece de grupo do WhatsApp 🤔 Ele começa com https://chat.whatsapp.com/');
     return;
@@ -1502,7 +1506,7 @@ document.getElementById('btnSalvarCfg').onclick = ()=>{
   cfg.linkGrupo = grupo;
   cfg.linkNuvem = nuvem;
   cfg.metaMensal = meta || 0;
-  cfg.aniversarios = [n1, n2];
+  cfg.aniversarios = [n1, n2, n3];
   salvarConfig(cfg);
   gravarLog('⚙️ Mudou configurações', 'Nome: ' + nome + (whats ? ', Whats atualizado' : ''));
   document.getElementById('nomeLojaTopo').textContent = nome;
