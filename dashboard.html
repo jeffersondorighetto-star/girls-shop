@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📊 Placar — Girls Shop</title>
+<!-- Fonte Baloo 2, igual às outras páginas -->
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ================================================
+   VARIÁVEIS DE CORES (mude aqui pra trocar tudo!)
+   ================================================ */
+:root{
+  --lilas:#8B5CF6;
+  --lilas-claro:#EDE9FE;
+  --amarelo:#FBBF24;
+  --amarelo-claro:#FEF3C7;
+  --verde:#2DD4BF;
+  --verde-claro:#CCFBF1;
+  --coral:#FB7185;
+  --coral-claro:#FFE4E6;
+  --ouro:#F59E0B;
+  --prata:#C0C4D0;
+  --bronze:#CD7F32;
+  --fundo:#FAF5FF;
+  --texto:#3B2A5E;
+  --texto-suave:#7C6B9E;
+  --branco:#FFFFFF;
+  --raio:20px;
+  --sombra:0 4px 14px rgba(139,92,246,.12);
+}
+
+/* Zerando espaços padrão */
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  font-family:'Baloo 2',cursive,sans-serif;
+  background:var(--fundo);
+  color:var(--texto);
+  font-size:16px;
+  line-height:1.45;
+  padding-bottom:60px;
+}
+
+/* ================= CABEÇALHO ================= */
+header{
+  background:linear-gradient(135deg,var(--lilas),#6D28D9);
+  color:#fff;
+  padding:22px 16px 70px;
+  text-align:center;
+  border-radius:0 0 30px 30px;
+  position:relative;
+}
+header .logo-emoji{
+  font-size:44px;
+  display:inline-block;
+  animation:flutua 3s ease-in-out infinite;
+}
+@keyframes flutua{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-8px)}
+}
+header h1{font-size:26px;font-weight:800;margin-top:4px;}
+header p{opacity:.9;font-size:15px;}
+
+/* Links para as outras páginas */
+.nav-links{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  margin-top:14px;
+  flex-wrap:wrap;
+}
+.nav-links a{
+  background:rgba(255,255,255,.2);
+  color:#fff;
+  text-decoration:none;
+  font-weight:700;
+  padding:10px 18px;
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
+  border-radius:999px;
+  transition:transform .2s, background .2s;
+}
+.nav-links a:hover{background:rgba(255,255,255,.35);transform:scale(1.05);}
+
+/* ================= CONTAINER ================= */
+main{max-width:760px;margin:0 auto;padding:0 14px;}
+
+/* ================= FILTRO DE PERÍODO ================= */
+.filtros{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  margin:-40px auto 22px;
+  background:var(--branco);
+  border-radius:999px;
+  padding:8px;
+  box-shadow:var(--sombra);
+  max-width:420px;
+  position:relative;
+}
+.filtros button{
+  flex:1;
+  border:none;
+  background:transparent;
+  font-family:inherit;
+  font-size:15px;
+  font-weight:700;
+  color:var(--texto-suave);
+  padding:10px 6px;
+  min-height:44px;
+  border-radius:999px;
+  cursor:pointer;
+  transition:all .25s;
+}
+.filtros button.ativo{
+  background:linear-gradient(135deg,var(--lilas),#6D28D9);
+  color:#fff;
+  transform:scale(1.04);
+}
+
+/* ================= TÍTULOS DE SEÇÃO ================= */
+.secao{margin-bottom:28px;}
+.secao h2{
+  font-size:21px;
+  font-weight:800;
+  margin-bottom:12px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* ================= GRID DE FATURAMENTO ================= */
+.grid-cards{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+@media(min-width:560px){
+  .grid-cards{grid-template-columns:repeat(4,1fr);}
+}
+.card-num{
+  background:var(--branco);
+  border-radius:var(--raio);
+  padding:16px 12px;
+  box-shadow:var(--sombra);
+  text-align:center;
+  animation:aparece .5s ease both;
+}
+.card-num .icone{font-size:26px;}
+.card-num .valor{
+  font-size:20px;
+  font-weight:800;
+  margin:4px 0 2px;
+}
+.card-num .rotulo{
+  font-size:13px;
+  color:var(--texto-suave);
+  font-weight:600;
+}
+.card-num.destaque-lucro{background:linear-gradient(135deg,var(--verde-claro),#fff);border:2px solid var(--verde);}
+.card-num.destaque-lucro .valor{color:#0F766E;}
+.card-num.lucro-negativo{background:var(--coral-claro);border:2px solid var(--coral);}
+.card-num.lucro-negativo .valor{color:#BE123C;}
+
+/* Animação de subir (fadeInUp) */
+@keyframes aparece{
+  from{opacity:0;transform:translateY(18px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* ================= RANKING ================= */
+.rank-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:var(--branco);
+  border-radius:var(--raio);
+  padding:12px 14px;
+  margin-bottom:10px;
+  box-shadow:var(--sombra);
+  animation:aparece .5s ease both;
+}
+.rank-item .pos{
+  font-size:22px;
+  font-weight:800;
+  min-width:38px;
+  text-align:center;
+}
+.rank-item .p-emoji{font-size:30px;}
+.rank-item .p-info{flex:1;}
+.rank-item .p-nome{font-weight:700;font-size:16px;}
+.rank-item .p-cat{font-size:13px;color:var(--texto-suave);}
+.rank-item .p-numeros{text-align:right;font-size:13px;}
+.rank-item .p-qtd{font-weight:800;font-size:16px;}
+.rank-item .p-dinheiro{color:var(--texto-suave);}
+
+/* Fundos especiais do pódio */
+.rank-1{background:linear-gradient(135deg,#FEF3C7,#FDE68A);border:2px solid var(--ouro);}
+.rank-2{background:linear-gradient(135deg,#F1F3F9,#DDE1EC);border:2px solid var(--prata);}
+.rank-3{background:linear-gradient(135deg,#FBEBDD,#F5D5B8);border:2px solid var(--bronze);}
+.rank-outros{background:var(--lilas-claro);border:2px solid #DDD6FE;}
+.rank-outros .pos{color:var(--lilas);}
+
+/* ================= GRÁFICO DE BARRAS (CSS puro) ================= */
+.grafico{
+  background:var(--branco);
+  border-radius:var(--raio);
+  padding:18px 14px;
+  box-shadow:var(--sombra);
+}
+.barra-linha{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:12px;
+}
+.barra-nome{
+  width:110px;
+  font-size:13px;
+  font-weight:700;
+  text-align:right;
+  flex-shrink:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.barra-trilho{
+  flex:1;
+  background:var(--lilas-claro);
+  border-radius:999px;
+  height:26px;
+  overflow:hidden;
+}
+.barra-preenchida{
+  height:100%;
+  border-radius:999px;
+  width:0;
+  transition:width 1s cubic-bezier(.22,1,.36,1);
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  padding-right:8px;
+  color:#fff;
+  font-size:12px;
+  font-weight:800;
+  min-width:0;
+}
+
+/* ================= META MENSAL ================= */
+.meta-card{
+  background:var(--branco);
+  border-radius:var(--raio);
+  padding:18px;
+  box-shadow:var(--sombra);
+  text-align:center;
+}
+.meta-card .meta-valores{font-size:18px;font-weight:800;margin-bottom:8px;}
+.meta-trilho{
+  background:var(--lilas-claro);
+  border-radius:999px;
+  height:30px;
+  overflow:hidden;
+  margin-bottom:10px;
+}
+.meta-progresso{
+  height:100%;
+  background:linear-gradient(90deg,var(--verde),#0D9488);
+  border-radius:999px;
+  width:0;
+  transition:width 1.2s cubic-bezier(.22,1,.36,1);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-weight:800;
+  font-size:14px;
+}
+.meta-msg{
+  font-size:17px;
+  font-weight:700;
+  padding:10px;
+  border-radius:14px;
+  background:var(--amarelo-claro);
+}
+.meta-sem-config a{color:var(--lilas);font-weight:800;}
+
+/* ================= INSIGHTS ================= */
+.insight{
+  background:var(--branco);
+  border-radius:var(--raio);
+  padding:16px;
+  margin-bottom:12px;
+  box-shadow:var(--sombra);
+  border-left:6px solid var(--lilas);
+  animation:aparece .5s ease both;
+}
+.insight h3{font-size:17px;margin-bottom:4px;}
+.insight p{font-size:15px;color:var(--texto-suave);}
+.insight.amarelo{border-left-color:var(--amarelo);}
+.insight.verde{border-left-color:var(--verde);}
+.insight.coral{border-left-color:var(--coral);}
+.insight .alerta{
+  margin-top:8px;
+  background:var(--coral-claro);
+  color:#BE123C;
+  font-weight:700;
+  padding:8px 10px;
+  border-radius:12px;
+  font-size:14px;
+}
+
+/* ================= LUANA ================= */
+.luna{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  background:linear-gradient(135deg,var(--lilas-claro),#fff);
+  border:2px dashed var(--lilas);
+  border-radius:var(--raio);
+  padding:16px;
+  box-shadow:var(--sombra);
+}
+.luna .avatar{
+  font-size:42px;
+  animation:flutua 3s ease-in-out infinite;
+  flex-shrink:0;
+}
+.luna .balao h3{font-size:17px;color:var(--lilas);}
+.luna .balao p{font-size:15px;}
+
+/* ================= ESTADO VAZIO ================= */
+.vazio{
+  background:var(--branco);
+  border-radius:var(--raio);
+  padding:40px 20px;
+  text-align:center;
+  box-shadow:var(--sombra);
+}
+.vazio .grande{font-size:56px;display:block;animation:flutua 3s ease-in-out infinite;}
+.vazio h2{font-size:22px;margin:10px 0 6px;}
+.vazio p{color:var(--texto-suave);font-size:16px;}
+.vazio a{
+  display:inline-block;
+  margin-top:14px;
+  background:linear-gradient(135deg,var(--lilas),#6D28D9);
+  color:#fff;
+  text-decoration:none;
+  font-weight:800;
+  padding:12px 24px;
+  min-height:44px;
+  border-radius:999px;
+}
+
+/* ================= CONFETE ================= */
+.confete{
+  position:fixed;
+  top:-12px;
+  width:10px;
+  height:16px;
+  z-index:9999;
+  pointer-events:none;
+  animation:caiConfete linear forwards;
+}
+@keyframes caiConfete{
+  to{transform:translateY(110vh) rotate(720deg);opacity:0;}
+}
+
+/* Aviso de erro gentil (localStorage cheio etc.) */
+.aviso-erro{
+  background:var(--coral-claro);
+  color:#BE123C;
+  border-radius:14px;
+  padding:12px;
+  text-align:center;
+  font-weight:700;
+  margin-bottom:16px;
+}
+</style>
+</head>
+<body>
+
+<!-- ============ CABEÇALHO ESTILO PLACAR ============ -->
+<header>
+  <span class="logo-emoji">🏆</span>
+  <h1>Placar da <span id="nomeLoja">Girls Shop</span></h1>
+  <p>Os números da loja de vocês! 🎮</p>
+  <nav class="nav-links">
+    <a href="index.html">🛍️ Vitrine</a>
+    <a href="admin.html">🔐 Admin</a>
+  </nav>
+</header>
+
+<main>
+  <!-- ============ FILTRO DE PERÍODO ============ -->
+  <div class="filtros" id="filtros">
+    <button data-periodo="semana">Esta semana</button>
+    <button data-periodo="mes" class="ativo">Este mês</button>
+    <button data-periodo="tudo">Desde o início</button>
+  </div>
+
+  <div id="avisoErro"></div>
+
+  <!-- ============ CONTEÚDO PRINCIPAL (preenchido via JS) ============ -->
+  <div id="conteudo"></div>
+</main>
+
+<script>
+/* =====================================================
+   DASHBOARD — PLACAR DA GIRLS SHOP
+   Lê: girlsShop_vendas, girlsShop_produtos, girlsShop_config
+   ===================================================== */
+
+// ---------- FUNÇÕES UTILITÁRIAS (iguais às outras páginas) ----------
+
+// Lê os produtos guardados (devolve lista vazia se der erro)
+function lerProdutos(){
+  try{
+    return JSON.parse(localStorage.getItem('girlsShop_produtos')) || [];
+  }catch(e){ return []; }
+}
+
+// Guarda os produtos (aqui quase não usamos, mas fica igual às outras páginas)
+function salvarProdutos(lista){
+  try{
+    localStorage.setItem('girlsShop_produtos', JSON.stringify(lista));
+  }catch(e){
+    mostrarErro('Ops! Não conseguimos salvar agora. Vamos tentar de novo? 🤗');
+  }
+}
+
+// Transforma centavos em "R$ XX,XX"
+function formatarPreco(centavos){
+  centavos = Number(centavos) || 0;
+  return 'R$ ' + (centavos/100).toFixed(2).replace('.', ',');
+}
+
+// Grava uma anotação no diário da loja (log)
+function gravarLog(acao, detalhe, motivo){
+  try{
+    let log = JSON.parse(localStorage.getItem('girlsShop_log')) || [];
+    const item = { data: new Date().toISOString(), acao: acao, detalhe: detalhe };
+    if(motivo) item.motivo = motivo;
+    log.unshift(item);
+    log = log.slice(0, 50); // guarda só as 50 últimas
+    localStorage.setItem('girlsShop_log', JSON.stringify(log));
+  }catch(e){ /* se não der, tudo bem, o log é só um diário */ }
+}
+
+// Lê as vendas registradas
+function lerVendas(){
+  try{
+    return JSON.parse(localStorage.getItem('girlsShop_vendas')) || [];
+  }catch(e){ return []; }
+}
+
+// Lê as configurações da loja
+function lerConfig(){
+  try{
+    return JSON.parse(localStorage.getItem('girlsShop_config')) || {};
+  }catch(e){ return {}; }
+}
+
+// Mostra um erro gentil no topo
+function mostrarErro(msg){
+  document.getElementById('avisoErro').innerHTML =
+    '<div class="aviso-erro">' + msg + '</div>';
+}
+
+// ---------- CONFETE (CSS/JS puro) ----------
+function soltarConfete(){
+  const cores = ['#8B5CF6','#FBBF24','#2DD4BF','#FB7185','#FFFFFF'];
+  for(let i=0; i<60; i++){
+    const c = document.createElement('div');
+    c.className = 'confete';
+    c.style.left = Math.random()*100 + 'vw';
+    c.style.background = cores[Math.floor(Math.random()*cores.length)];
+    c.style.animationDuration = (2 + Math.random()*2) + 's';
+    c.style.animationDelay = (Math.random()*0.5) + 's';
+    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '3px';
+    document.body.appendChild(c);
+    setTimeout(()=> c.remove(), 4500); // some depois da chuvinha
+  }
+}
+
+// ---------- FILTRO DE PERÍODO ----------
+// Decide quais vendas entram no período escolhido
+let periodoAtual = 'mes'; // começa mostrando "Este mês"
+
+function vendasDoPeriodo(vendas){
+  const agora = new Date();
+  return vendas.filter(v => {
+    const d = new Date(v.data);
+    if(periodoAtual === 'tudo') return true;
+    if(periodoAtual === 'mes'){
+      return d.getFullYear() === agora.getFullYear() && d.getMonth() === agora.getMonth();
+    }
+    // 'semana': últimos 7 dias
+    const seteDiasAtras = new Date(agora);
+    seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
+    return d >= seteDiasAtras;
+  });
+}
+
+// ---------- CÁLCULOS DO PLACAR ----------
+function calcularNumeros(vendas){
+  let receita = 0, custo = 0, lucro = 0, itens = 0, descontos = 0;
+  const porProduto = {}; // soma por produto pro ranking e gráfico
+
+  vendas.forEach(v => {
+    receita += v.total || 0;
+    lucro += v.lucro || 0;
+    (v.itens || []).forEach(it => {
+      itens += it.qtd || 0;
+      custo += (it.custoUnit || 0) * (it.qtd || 0);
+      // desconto concedido = diferença entre preço cheio e preço cobrado
+      if(it.desconto && it.desconto > 0){
+        const cheio = it.precoUnit / (1 - it.desconto/100);
+        descontos += Math.round((cheio - it.precoUnit) * it.qtd);
+      }
+      // acumula por produto
+      const chave = it.nome + '|' + (it.emoji || '📦');
+      if(!porProduto[chave]) porProduto[chave] = { nome: it.nome, emoji: it.emoji || '📦', qtd: 0, receita: 0, lucro: 0, categoria: '' };
+      porProduto[chave].qtd += it.qtd || 0;
+      porProduto[chave].receita += (it.precoUnit || 0) * (it.qtd || 0);
+      porProduto[chave].lucro += ((it.precoUnit || 0) - (it.custoUnit || 0)) * (it.qtd || 0);
+    });
+  });
+
+  // completa a categoria de cada produto olhando o catálogo
+  const produtos = lerProdutos();
+  Object.values(porProduto).forEach(p => {
+    const achado = produtos.find(x => x.nome === p.nome);
+    if(achado) p.categoria = achado.categoria || '';
+  });
+
+  const pedidos = vendas.length;
+  return {
+    receita: receita,
+    custo: custo,
+    lucro: lucro,
+    pedidos: pedidos,
+    itens: itens,
+    ticket: pedidos ? Math.round(receita / pedidos) : 0,
+    margem: receita ? Math.round((lucro / receita) * 100) : 0,
+    descontos: descontos,
+    porProduto: Object.values(porProduto)
+  };
+}
+
+// ---------- DESENHA O PLACAR NA TELA ----------
+function desenhar(){
+  const config = lerConfig();
+  document.getElementById('nomeLoja').textContent = config.nomeLoja || 'Girls Shop';
+
+  const todas = lerVendas();
+  const vendas = vendasDoPeriodo(todas);
+  const conteudo = document.getElementById('conteudo');
+
+  // Nome bonitinho do período
+  const nomesPeriodo = { semana: 'nesta semana', mes: 'neste mês', tudo: 'desde o início' };
+  const nomePeriodo = nomesPeriodo[periodoAtual];
+
+  // ===== ESTADO VAZIO MOTIVADOR =====
+  if(vendas.length === 0){
+    conteudo.innerHTML = `
+      <div class="vazio">
+        <span class="grande">📣</span>
+        <h2>Ainda sem vendas ${nomePeriodo}</h2>
+        <p>Bora divulgar a vitrine no WhatsApp! Cada cliente novo é uma chance de o placar subir! 💪✨</p>
+        <a href="admin.html">Ir para o Admin →</a>
+      </div>`;
+    desenharMeta(config, todas); // a meta olha o mês inteiro, mesmo sem vendas no filtro
+    desenharLuna(0);
+    return;
+  }
+
+  const n = calcularNumeros(vendas);
+
+  // ===== FATURAMENTO DETALHADO =====
+  let html = `
+  <section class="secao">
+    <h2>💰 Faturamento ${nomePeriodo}</h2>
+    <div class="grid-cards">
+      <div class="card-num" style="animation-delay:.05s">
+        <div class="icone">💵</div>
+        <div class="valor">${formatarPreco(n.receita)}</div>
+        <div class="rotulo">Tudo que entrou</div>
+      </div>
+      <div class="card-num" style="animation-delay:.1s">
+        <div class="icone">🛒</div>
+        <div class="valor">${formatarPreco(n.custo)}</div>
+        <div class="rotulo">Quanto custou pra vocês</div>
+      </div>
+      <div class="card-num ${n.lucro >= 0 ? 'destaque-lucro' : 'lucro-negativo'}" style="animation-delay:.15s">
+        <div class="icone">${n.lucro >= 0 ? '🌟' : '😅'}</div>
+        <div class="valor">${formatarPreco(n.lucro)}</div>
+        <div class="rotulo">Lucro (o que sobrou!)</div>
+      </div>
+      <div class="card-num" style="animation-delay:.2s">
+        <div class="icone">🧾</div>
+        <div class="valor">${n.pedidos}</div>
+        <div class="rotulo">Pedidos fechados</div>
+      </div>
+      <div class="card-num" style="animation-delay:.25s">
+        <div class="icone">📦</div>
+        <div class="valor">${n.itens}</div>
+        <div class="rotulo">Produtos vendidos</div>
+      </div>
+      <div class="card-num" style="animation-delay:.3s">
+        <div class="icone">🎟️</div>
+        <div class="valor">${formatarPreco(n.ticket)}</div>
+        <div class="rotulo">Média por pedido</div>
+      </div>
+      <div class="card-num" style="animation-delay:.35s">
+        <div class="icone">📈</div>
+        <div class="valor">${n.margem}%</div>
+        <div class="rotulo">Quanto sobrou de lucro</div>
+      </div>
+      <div class="card-num" style="animation-delay:.4s">
+        <div class="icone">🏷️</div>
+        <div class="valor">${formatarPreco(n.descontos)}</div>
+        <div class="rotulo">Descontos que vocês deram</div>
+      </div>
+    </div>
+  </section>`;
+
+  // ===== RANKING TOP 10 =====
+  const ranking = [...n.porProduto].sort((a,b) => b.qtd - a.qtd).slice(0, 10);
+  const medalhas = ['🥇','🥈','🥉'];
+  html += `
+  <section class="secao">
+    <h2>🏆 Top 10 Mais Vendidos</h2>`;
+  ranking.forEach((p, i) => {
+    const classe = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-outros';
+    const pos = i < 3 ? medalhas[i] : (i+1) + 'º';
+    html += `
+    <div class="rank-item ${classe}" style="animation-delay:${(i*0.08).toFixed(2)}s">
+      <div class="pos">${pos}</div>
+      <div class="p-emoji">${p.emoji}</div>
+      <div class="p-info">
+        <div class="p-nome">${p.nome}</div>
+        <div class="p-cat">${p.categoria || 'Sem categoria'}</div>
+      </div>
+      <div class="p-numeros">
+        <div class="p-qtd">${p.qtd} un</div>
+        <div class="p-dinheiro">${formatarPreco(p.receita)} • lucro ${formatarPreco(p.lucro)}</div>
+      </div>
+    </div>`;
+  });
+  html += `</section>`;
+
+  // ===== GRÁFICO DE BARRAS (lucro por produto) =====
+  const lucrativos = [...n.porProduto].sort((a,b) => b.lucro - a.lucro).slice(0, 8);
+  const maiorLucro = Math.max(...lucrativos.map(p => Math.max(p.lucro, 0)), 1);
+  const gradientes = [
+    'linear-gradient(90deg,#8B5CF6,#6D28D9)',
+    'linear-gradient(90deg,#FBBF24,#F59E0B)',
+    'linear-gradient(90deg,#2DD4BF,#0D9488)',
+    'linear-gradient(90deg,#FB7185,#E11D48)'
+  ];
+  html += `
+  <section class="secao">
+    <h2>📊 Lucro por Produto</h2>
+    <div class="grafico">`;
+  lucrativos.forEach((p, i) => {
+    const pct = Math.max(Math.round((p.lucro / maiorLucro) * 100), 3);
+    html += `
+      <div class="barra-linha">
+        <div class="barra-nome">${p.emoji} ${p.nome}</div>
+        <div class="barra-trilho">
+          <div class="barra-preenchida" data-largura="${pct}" style="background:${gradientes[i % gradientes.length]}">${formatarPreco(p.lucro)}</div>
+        </div>
+      </div>`;
+  });
+  html += `</div></section>`;
+
+  // ===== INSIGHTS AUTOMÁTICOS =====
+  html += `<section class="secao"><h2>💡 Dicas do Placar</h2>`;
+
+  // 🌟 Destaque
+  const msgMotiva = n.lucro > 0
+    ? `Foram <strong>${n.pedidos} pedidos</strong> e <strong>${formatarPreco(n.lucro)}</strong> de lucro ${nomePeriodo}. Continuem assim, estão brilhando! ✨`
+    : `Ainda não sobrou lucro ${nomePeriodo}, mas cada tentativa ensina algo novo! 🌱`;
+  html += `
+    <div class="insight verde" style="animation-delay:.1s">
+      <h3>🌟 Destaque do Período</h3>
+      <p>${msgMotiva}</p>
+    </div>`;
+
+  // 🏆 Produto Motor (o que mais gerou lucro)
+  const motor = [...n.porProduto].sort((a,b) => b.lucro - a.lucro)[0];
+  if(motor && n.lucro > 0){
+    const pctMotor = Math.round((motor.lucro / n.lucro) * 100);
+    html += `
+    <div class="insight amarelo" style="animation-delay:.2s">
+      <h3>🏆 Produto Motor: ${motor.emoji} ${motor.nome}</h3>
+      <p>Ele sozinho trouxe <strong>${pctMotor}% do lucro</strong>! Nunca deixem ele faltar na vitrine! 🔑</p>
+    </div>`;
+  }
+
+  // 📚 Momento Aprendizado (pool de 10 dicas, uma aleatória)
+  const dicas = [
+    'A Magazine Luiza começou vendendo numa porta de garagem! Toda loja grande já foi pequenininha. 💜',
+    'Reinvistam uns 30% do lucro em produtos novos. Assim a loja cresce sozinha, como uma plantinha! 🌱',
+    'Um bilhetinho carinhoso junto com a entrega faz o cliente voltar. Custam centavos e valem muito! 💌',
+    'Produto que esgota rápido é sinal de sucesso: comprem mais dele na próxima! 🏆',
+    'Foto bonita vende mais! Arrumem os produtinhos num cantinho iluminado antes de fotografar. 📸',
+    'Anote tudo: quanto pagou, quanto vendeu, quem comprou. Empreendedora organizada vai mais longe! 📒',
+    'Cliente feliz conta pros amigos. O melhor anúncio do mundo é de graça! 🗣️',
+    'Preço bom não é o mais barato: é o que paga o custo, sobra lucro e o cliente acha justo. ⚖️',
+    'Antes de comprar pra revender, perguntem: "eu usaria? minhas amigas usariam?" 🤔',
+    'Sorvete de comemoração é importante, mas o lucro grande cresce quando vocês reinvestem primeiro! 🍦➡️📈'
+  ];
+  const dica = dicas[Math.floor(Math.random() * dicas.length)];
+  html += `
+    <div class="insight" style="animation-delay:.3s">
+      <h3>📚 Momento Aprendizado</h3>
+      <p>${dica}</p>
+    </div>`;
+
+  // 🔥 Estratégia de Desconto: olha os produtos em oferta no catálogo
+  const produtos = lerProdutos();
+  const emOferta = produtos.filter(p => (p.desconto || 0) > 0 && p.status !== 'removido');
+  if(emOferta.length > 0){
+    const margensRuins = emOferta.filter(p => {
+      const precoComDesconto = Math.round(p.precoVenda * (1 - p.desconto/100));
+      const margem = precoComDesconto > 0 ? ((precoComDesconto - p.custo) / precoComDesconto) * 100 : 0;
+      return margem < 30;
+    });
+    let txt = `Vocês têm <strong>${emOferta.length} produto(s) em oferta</strong>: ${emOferta.map(p => p.emoji + ' ' + p.nome).join(', ')}. Oferta boa atrai cliente! 🔥`;
+    if(margensRuins.length > 0){
+      txt += `<div class="alerta">⚠️ Cuidado! ${margensRuins.map(p => p.nome).join(', ')} ficou(ram) com menos de 30% de lucro com o desconto. Quase não sobra dinheiro aí!</div>`;
+    }
+    html += `
+    <div class="insight coral" style="animation-delay:.4s">
+      <h3>🔥 Estratégia de Desconto</h3>
+      <p>${txt}</p>
+    </div>`;
+  } else {
+    html += `
+    <div class="insight coral" style="animation-delay:.4s">
+      <h3>🔥 Estratégia de Desconto</h3>
+      <p>Nenhuma oferta ativa agora. Que tal fazer uma promoçãozinha de fim de semana pra atrair clientes? 🏷️</p>
+    </div>`;
+  }
+  html += `</section>`;
+
+  conteudo.innerHTML = html;
+
+  // Anima as barrinhas depois de desenhar (para o CSS animar o crescimento)
+  setTimeout(() => {
+    document.querySelectorAll('.barra-preenchida').forEach(b => {
+      b.style.width = b.dataset.largura + '%';
+    });
+  }, 60);
+
+  desenharMeta(config, todas);
+  desenharLuna(n.lucro);
+}
+
+// ---------- META MENSAL GAMIFICADA ----------
+function desenharMeta(config, todasAsVendas){
+  // A meta sempre olha para o MÊS ATUAL inteiro
+  const agora = new Date();
+  const vendasMes = todasAsVendas.filter(v => {
+    const d = new Date(v.data);
+    return d.getFullYear() === agora.getFullYear() && d.getMonth() === agora.getMonth();
+  });
+  const lucroMes = vendasMes.reduce((s, v) => s + (v.lucro || 0), 0);
+  const meta = Number(config.metaMensal) || 0;
+
+  let html = `<section class="secao"><h2>🎯 Meta do Mês</h2>`;
+  if(meta <= 0){
+    html += `
+    <div class="meta-card meta-sem-config">
+      <p style="font-size:17px">Vocês ainda não definiram uma meta de lucro pro mês! 🎯<br>
+      Uma meta deixa o jogo mais divertido!</p>
+      <p style="margin-top:8px"><a href="admin.html">Definir a meta no Admin →</a></p>
+    </div>`;
+  } else {
+    const pct = Math.round((lucroMes / meta) * 100);
+    const pctBarra = Math.min(pct, 100);
+    let msg;
+    if(pct >= 100) msg = '🎉 META BATIDA! Vocês merecem um sorvete! 🍦';
+    else if(pct >= 75) msg = '🔥 Quase lá! Falta só um pouquinho!';
+    else if(pct >= 50) msg = '🚀 Metade do caminho! Continuem!';
+    else if(pct >= 25) msg = '💪 Bom começo! Cada venda conta!';
+    else msg = '🌱 Toda grande jornada começa com um passinho!';
+    html += `
+    <div class="meta-card">
+      <div class="meta-valores">${formatarPreco(lucroMes)} de ${formatarPreco(meta)}</div>
+      <div class="meta-trilho">
+        <div class="meta-progresso" id="barraMeta">${pct}%</div>
+      </div>
+      <div class="meta-msg">${msg}</div>
+    </div>`;
+  }
+  html += `</section>`;
+
+  // Coloca a meta logo depois do conteúdo principal
+  document.getElementById('conteudo').insertAdjacentHTML('beforeend', html);
+
+  // Anima a barra da meta
+  setTimeout(() => {
+    const barra = document.getElementById('barraMeta');
+    if(barra) barra.style.width = Math.max(Math.min(Math.round((lucroMes/Math.max(meta,1))*100),100), 6) + '%';
+  }, 100);
+
+  // Confete 1x por sessão quando bate 100%
+  if(meta > 0 && lucroMes >= meta && !sessionStorage.getItem('girlsShop_confeteMeta')){
+    sessionStorage.setItem('girlsShop_confeteMeta', 'sim');
+    soltarConfete();
+  }
+}
+
+// ---------- LUANA, A CONSULTORA ----------
+function desenharLuna(lucro){
+  let msg;
+  if(lucro >= 5000){ // R$ 50 ou mais = alto
+    msg = 'UAU, que lucro incrível! 🤑 Que tal dividir: uma parte pra comprar mais produtos e uma partezinha pra comemorar? Vocês merecem!';
+  } else if(lucro > 0){
+    msg = 'Lucro no azul, parabéns! 💜 Dica: guardem uma parte pra repor o que mais vende. Loja que cresce é loja que reinveste!';
+  } else {
+    msg = 'Ainda sem lucro nesse período, tudo bem! 🌱 Olhem o ranking: os produtos que mais saem são seus melhores amigos. Bora divulgar eles!';
+  }
+  const html = `
+  <section class="secao">
+    <div class="luna">
+      <div class="avatar">👧🏽</div>
+      <div class="balao">
+        <h3>Luna, a Consultora</h3>
+        <p>${msg}</p>
+      </div>
+    </div>
+  </section>`;
+  document.getElementById('conteudo').insertAdjacentHTML('beforeend', html);
+}
+
+// ---------- BOTÕES DO FILTRO ----------
+document.getElementById('filtros').addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  periodoAtual = btn.dataset.periodo;
+  document.querySelectorAll('#filtros button').forEach(b => b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  desenhar(); // redesenha o placar com o novo período
+});
+
+// ---------- ☁️ NUVEM — busca os números mais novos da Planilha Viva ----------
+// Link da nuvem gravado pelo arquiteto 🌙
+const LINK_NUVEM_PADRAO = 'https://script.google.com/macros/s/AKfycbxw5SjeYtgLYU416slAdyj5ybTwe3_hHHVNtw2pL7-iP_MvW8bLZL773NprCBJJubepkQ/exec';
+function urlNuvem(){
+  try{ return (lerConfig().linkNuvem || LINK_NUVEM_PADRAO).trim(); }catch(e){ return LINK_NUVEM_PADRAO; }
+}
+function temNuvem(){ return /^https:\/\/script\.google(macros)?\.com\//.test(urlNuvem()); }
+
+function puxarDaNuvem(){
+  if(!temNuvem()) return;
+  fetch(urlNuvem() + '?acao=ler&t=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d || !d.ok) return;
+      const cfgLocal = lerConfig();
+      if((d.atualizadoEm || 0) <= (cfgLocal.atualizadoEm || 0)) return; // já está em dia
+      if(d.produtos && d.produtos.length) salvarProdutos(d.produtos);
+      if(d.vendas) localStorage.setItem('girlsShop_vendas', JSON.stringify(d.vendas));
+      const cfgNova = d.config || {};
+      cfgNova.linkNuvem = cfgLocal.linkNuvem; // o link mora no aparelho!
+      cfgNova.atualizadoEm = d.atualizadoEm;
+      cfgNova.seedCarregado = true;
+      localStorage.setItem('girlsShop_config', JSON.stringify(cfgNova));
+      desenhar(); // redesenha o placar com os números fresquinhos! ✨
+    })
+    .catch(function(){ /* sem internet? o placar segue local 💜 */ });
+}
+
+// ---------- COMEÇA TUDO! ----------
+try{
+  desenhar();
+  puxarDaNuvem(); // ☁️ checa se a nuvem tem novidades
+}catch(e){
+  mostrarErro('Ops! Algo não ficou certo. Vamos tentar de novo? 🤗');
+}
+</script>
+</body>
+</html>
+<!-- ✅ Arquivo completo -->

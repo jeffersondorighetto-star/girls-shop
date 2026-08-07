@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Girls Shop — Vitrine</title>
+<!-- Única dependência externa permitida: a fonte Baloo 2 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   VARIÁVEIS — mude aqui para personalizar a loja toda! 🎨
+   ============================================================ */
+:root{
+  --lilas:#8B5CF6;
+  --amarelo:#FBBF24;
+  --verde:#2DD4BF;
+  --coral:#FB7185;
+  --fundo:#FAF5FF;
+  --cartao:#FFFFFF;
+  --texto:#3B2D5C;
+  --texto-suave:#7A6C9B;
+  --sombra:0 6px 18px rgba(139,92,246,.15);
+  --raio:20px;
+}
+
+/* Zerando espaçamentos padrão */
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  font-family:'Baloo 2',cursive,sans-serif;
+  background:var(--fundo);
+  color:var(--texto);
+  font-size:16px; /* nunca menor que 16px */
+  min-height:100vh;
+  padding-bottom:90px; /* espaço pra barra inferior do carrinho */
+}
+
+/* ============================================================
+   CABEÇALHO
+   ============================================================ */
+header{
+  background:linear-gradient(135deg,var(--lilas),#A78BFA);
+  color:#fff;
+  text-align:center;
+  padding:24px 16px 40px;
+  border-radius:0 0 30px 30px;
+  position:relative;
+  box-shadow:var(--sombra);
+}
+.logo-emoji{
+  font-size:52px;
+  display:inline-block;
+  animation:flutuar 2.5s ease-in-out infinite; /* emoji flutuando */
+}
+@keyframes flutuar{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-10px);}
+}
+header h1{font-size:30px;font-weight:800;letter-spacing:.5px;}
+header .frase{font-size:16px;opacity:.95;margin-top:2px;}
+
+/* Botão do carrinho no cabeçalho */
+.btn-carrinho-topo{
+  position:absolute;
+  top:16px;right:16px;
+  background:#fff;
+  border:none;
+  border-radius:50%;
+  width:52px;height:52px; /* maior que 44px = fácil de tocar */
+  font-size:24px;
+  cursor:pointer;
+  box-shadow:var(--sombra);
+  transition:transform .15s;
+}
+.btn-carrinho-topo:active{transform:scale(.9);}
+.badge-carrinho{
+  position:absolute;
+  top:-4px;right:-4px;
+  background:var(--coral);
+  color:#fff;
+  border-radius:50%;
+  min-width:24px;height:24px;
+  font-size:14px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 5px;
+}
+/* Animação "bump" quando adiciona item */
+.badge-carrinho.bump{animation:bump .35s ease;}
+@keyframes bump{
+  0%{transform:scale(1);}
+  50%{transform:scale(1.5);}
+  100%{transform:scale(1);}
+}
+
+/* Banner de aniversário 🎂 */
+.banner-aniversario{
+  background:linear-gradient(90deg,var(--amarelo),var(--coral));
+  color:#fff;
+  text-align:center;
+  font-weight:700;
+  padding:10px 16px;
+  font-size:16px;
+  display:none; /* só aparece se hoje for aniversário de uma sócia */
+}
+
+/* ============================================================
+   FAIXA DE BENEFÍCIOS
+   ============================================================ */
+.beneficios{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+  padding:14px 12px 4px;
+}
+.chip-beneficio{
+  background:var(--cartao);
+  border-radius:999px;
+  padding:8px 14px;
+  font-size:15px;
+  font-weight:600;
+  color:var(--texto);
+  box-shadow:var(--sombra);
+  white-space:nowrap;
+}
+
+/* ============================================================
+   FILTROS DE CATEGORIA
+   ============================================================ */
+.filtros{
+  display:flex;
+  gap:8px;
+  padding:14px 12px;
+  overflow-x:auto; /* desliza pro lado no celular */
+  -webkit-overflow-scrolling:touch;
+}
+.chip-filtro{
+  background:var(--cartao);
+  border:2px solid transparent;
+  border-radius:999px;
+  padding:8px 16px;
+  min-height:44px; /* alvo de toque confortável */
+  font-family:inherit;
+  font-size:16px;
+  font-weight:600;
+  color:var(--texto-suave);
+  cursor:pointer;
+  white-space:nowrap;
+  transition:all .2s;
+}
+.chip-filtro.ativo{
+  background:var(--lilas);
+  color:#fff;
+  border-color:var(--lilas);
+  transform:scale(1.05);
+}
+
+/* ============================================================
+   GRID DE PRODUTOS
+   ============================================================ */
+.grid-produtos{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:14px;
+  padding:8px 14px 20px;
+  max-width:900px;
+  margin:0 auto;
+}
+.card-produto{
+  background:var(--cartao);
+  border-radius:var(--raio);
+  overflow:hidden;
+  box-shadow:var(--sombra);
+  display:flex;
+  flex-direction:column;
+  animation:fadeInUp .5s ease both; /* entrada suave */
+  position:relative;
+}
+/* Atraso escalonado: cada card entra um pouquinho depois */
+.card-produto:nth-child(1){animation-delay:.05s;}
+.card-produto:nth-child(2){animation-delay:.1s;}
+.card-produto:nth-child(3){animation-delay:.15s;}
+.card-produto:nth-child(4){animation-delay:.2s;}
+.card-produto:nth-child(5){animation-delay:.25s;}
+.card-produto:nth-child(6){animation-delay:.3s;}
+.card-produto:nth-child(n+7){animation-delay:.35s;}
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(20px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.card-foto{
+  height:160px; /* foto com mais destaque! */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:56px;
+  cursor:pointer; /* toque pra ver os detalhes! */
+  overflow:hidden; /* a foto não vaza pelas bordas redondas */
+  position:relative;
+}
+/* Foto real do produto cobre o card todinho */
+.card-foto img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  transition:transform .3s ease; /* zoom suave */
+}
+/* Ao passar o mouse ou tocar, a foto dá uma aproximadinha */
+.card-produto:hover .card-foto img{transform:scale(1.07);}
+.card-produto:active .card-foto img{transform:scale(1.07);}
+/* Lupinha convidando a tocar na foto 🔍 */
+.card-foto::after{
+  content:"🔍";
+  position:absolute;
+  bottom:8px;right:8px;
+  width:32px;height:32px;
+  background:rgba(255,255,255,.92);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;
+  box-shadow:0 2px 8px rgba(59,45,92,.18);
+  pointer-events:none; /* não atrapalha o toque */
+}
+
+/* ============================================================
+   MODAL DE DETALHES DO PRODUTO 🔍
+   ============================================================ */
+.modal-produto{
+  position:fixed;inset:0;
+  z-index:80;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+}
+.modal-produto.aberto{display:flex;}
+.modal-fundo{
+  position:absolute;inset:0;
+  background:rgba(30,15,60,.5);
+}
+.modal-caixa{
+  position:relative;
+  background:var(--cartao);
+  border-radius:var(--raio);
+  width:100%;
+  max-width:420px;
+  max-height:88vh;
+  overflow-y:auto;
+  box-shadow:var(--sombra);
+  animation:fadeInUp .3s ease both;
+}
+.modal-foto{
+  height:260px; /* foto grandona nos detalhes! */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:90px;
+  overflow:hidden;
+  border-radius:var(--raio) var(--raio) 0 0;
+}
+.modal-foto img{width:100%;height:100%;object-fit:cover;display:block;}
+.modal-fechar{
+  position:absolute;
+  top:10px;right:10px;
+  width:44px;height:44px;
+  border:none;border-radius:50%;
+  background:rgba(255,255,255,.92);
+  font-size:18px;
+  cursor:pointer;
+  box-shadow:var(--sombra);
+  z-index:2;
+}
+.modal-corpo{padding:16px 18px 20px;}
+.modal-nome{font-size:22px;font-weight:800;line-height:1.2;}
+.modal-categoria{font-size:15px;color:var(--texto-suave);margin-top:2px;}
+.modal-descricao{font-size:16px;line-height:1.45;margin:10px 0;}
+.modal-estoque{font-size:15px;font-weight:700;color:var(--coral);margin-top:6px;}
+.modal-precos{margin:10px 0 4px;}
+.modal-precos .preco-atual{font-size:26px;}
+.modal-corpo .btn-adicionar{width:100%;}
+.card-info{padding:12px;display:flex;flex-direction:column;gap:4px;flex:1;}
+.card-nome{font-size:16px;font-weight:700;line-height:1.2;}
+.card-categoria{font-size:14px;color:var(--texto-suave);}
+.card-precos{margin-top:auto;padding-top:4px;}
+.preco-atual{font-size:20px;font-weight:800;color:var(--lilas);}
+.preco-atual.com-desconto{color:#059669;} /* preço novo em verde */
+.preco-antigo{
+  font-size:14px;
+  color:var(--texto-suave);
+  text-decoration:line-through; /* preço riscado */
+  margin-right:6px;
+}
+.badge-oferta{
+  position:absolute;
+  top:8px;left:8px;
+  background:var(--coral);
+  color:#fff;
+  font-size:13px;
+  font-weight:700;
+  padding:3px 10px;
+  border-radius:999px;
+  animation:pulsar 1.2s ease-in-out infinite; /* badge pulsante */
+}
+@keyframes pulsar{
+  0%,100%{transform:scale(1);}
+  50%{transform:scale(1.1);}
+}
+.badge-desconto{
+  position:absolute;
+  top:8px;right:8px;
+  background:var(--amarelo);
+  color:#5B4500;
+  font-size:13px;
+  font-weight:800;
+  padding:3px 10px;
+  border-radius:999px;
+}
+.btn-adicionar{
+  margin-top:8px;
+  background:var(--verde);
+  color:#063A33;
+  border:none;
+  border-radius:14px;
+  padding:10px;
+  min-height:44px;
+  font-family:inherit;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  transition:transform .15s, background .2s;
+}
+.btn-adicionar:active{transform:scale(.95);}
+.btn-adicionar:disabled{
+  background:#E5E0F0;
+  color:var(--texto-suave);
+  cursor:not-allowed;
+}
+
+/* Estado vazio fofo */
+.vitrine-vazia{
+  text-align:center;
+  padding:60px 20px;
+  font-size:20px;
+  font-weight:600;
+  color:var(--texto-suave);
+}
+.vitrine-vazia .emoji-grande{font-size:60px;display:block;margin-bottom:12px;}
+
+/* ============================================================
+   BARRA INFERIOR DO CARRINHO
+   ============================================================ */
+.barra-carrinho{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  background:var(--cartao);
+  box-shadow:0 -6px 18px rgba(139,92,246,.18);
+  padding:12px 16px;
+  display:none; /* só aparece quando tem itens */
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  z-index:50;
+  border-radius:20px 20px 0 0;
+}
+.barra-carrinho.visivel{display:flex;}
+.barra-info{font-weight:700;font-size:16px;}
+.btn-ver-pedido{
+  background:var(--lilas);
+  color:#fff;
+  border:none;
+  border-radius:14px;
+  padding:12px 20px;
+  min-height:44px;
+  font-family:inherit;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:transform .15s;
+}
+.btn-ver-pedido:active{transform:scale(.95);}
+
+/* ============================================================
+   DRAWER LATERAL DO CARRINHO
+   ============================================================ */
+.overlay{
+  position:fixed;inset:0;
+  background:rgba(30,15,60,.45);
+  z-index:60;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .25s;
+}
+.overlay.aberto{opacity:1;pointer-events:auto;}
+.drawer{
+  position:fixed;
+  top:0;right:0;bottom:0;
+  width:min(360px,92vw);
+  background:var(--cartao);
+  z-index:70;
+  transform:translateX(100%);
+  transition:transform .3s ease;
+  display:flex;
+  flex-direction:column;
+  border-radius:24px 0 0 24px;
+}
+.drawer.aberto{transform:translateX(0);}
+.drawer-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:18px;
+  border-bottom:2px dashed #EDE9FE;
+}
+.drawer-header h2{font-size:20px;}
+.btn-fechar-drawer{
+  background:#F3EEFB;
+  border:none;
+  border-radius:50%;
+  width:44px;height:44px;
+  font-size:18px;
+  cursor:pointer;
+}
+.drawer-lista{flex:1;overflow-y:auto;padding:12px 18px;}
+.item-carrinho{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 0;
+  border-bottom:1px solid #F3EEFB;
+}
+.item-emoji{
+  width:48px;height:48px;
+  border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  flex-shrink:0;
+}
+.item-detalhes{flex:1;min-width:0;}
+.item-nome{font-weight:700;font-size:15px;}
+.item-preco{font-size:14px;color:var(--texto-suave);}
+.item-controles{display:flex;align-items:center;gap:6px;}
+.btn-qtd{
+  width:44px;height:44px;
+  border:none;
+  border-radius:12px;
+  background:#F3EEFB;
+  font-size:20px;
+  font-weight:700;
+  color:var(--lilas);
+  cursor:pointer;
+}
+.btn-qtd:disabled{opacity:.4;cursor:not-allowed;}
+.qtd-numero{min-width:24px;text-align:center;font-weight:700;}
+.btn-lixeira{
+  width:44px;height:44px;
+  border:none;border-radius:12px;
+  background:#FFE4E6;
+  font-size:18px;
+  cursor:pointer;
+}
+.drawer-total{
+  padding:16px 18px;
+  border-top:2px dashed #EDE9FE;
+  font-size:20px;
+  font-weight:800;
+  display:flex;
+  justify-content:space-between;
+}
+.carrinho-vazio-msg{
+  text-align:center;
+  padding:40px 10px;
+  color:var(--texto-suave);
+  font-size:17px;
+}
+
+/* ============================================================
+   CAIXA DE PEDIDO FINAL ⭐
+   ============================================================ */
+.secao-pedido{
+  max-width:600px;
+  margin:10px auto 30px;
+  padding:0 14px;
+}
+.caixa-pedido{
+  background:var(--cartao);
+  border-radius:var(--raio);
+  box-shadow:var(--sombra);
+  padding:20px;
+}
+.caixa-pedido h2{font-size:22px;margin-bottom:4px;}
+.caixa-pedido .dica{font-size:15px;color:var(--texto-suave);margin-bottom:14px;}
+.campo-nome{
+  width:100%;
+  border:2px solid #EDE9FE;
+  border-radius:14px;
+  padding:12px 14px;
+  font-family:inherit;
+  font-size:16px;
+  margin-bottom:12px;
+  min-height:44px;
+  background:var(--fundo);
+}
+.campo-nome:focus{outline:none;border-color:var(--lilas);}
+.texto-pedido{
+  width:100%;
+  min-height:220px;
+  border:2px dashed #EDE9FE;
+  border-radius:14px;
+  padding:14px;
+  font-family:monospace; /* alinha as linhas do pedido */
+  font-size:16px;
+  background:var(--fundo);
+  color:var(--texto);
+  resize:vertical;
+  white-space:pre;
+}
+.botoes-pedido{
+  display:flex;
+  gap:10px;
+  margin-top:14px;
+  flex-wrap:wrap;
+}
+.btn-copiar{
+  flex:1;
+  min-width:160px;
+  border:none;
+  border-radius:14px;
+  padding:14px;
+  min-height:48px;
+  font-family:inherit;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  transition:transform .15s;
+}
+.btn-copiar{background:var(--amarelo);color:#5B4500;}
+.btn-copiar:active{transform:scale(.95);}
+
+/* Passinhos de como comprar (1-2-3) */
+.passos-compra{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.passos-compra span{
+  background:#F3EEFB;
+  border-radius:999px;
+  padding:6px 12px;
+  font-size:14px;
+  font-weight:700;
+  color:var(--texto);
+}
+
+/* Aviso dos responsáveis 🛡️ */
+.aviso-responsavel{
+  margin-top:14px;
+  background:#FFF7E6;
+  border:2px dashed var(--amarelo);
+  border-radius:14px;
+  padding:10px 14px;
+  font-size:15px;
+  color:#5B4500;
+}
+
+/* Botão flutuante do WhatsApp + etiquetinha do grupo */
+.etiqueta-grupo{
+  position:fixed;
+  bottom:112px; /* flutua ao lado do botão 💬 */
+  right:84px;
+  background:var(--cartao);
+  border-radius:999px;
+  padding:8px 14px;
+  font-size:14px;
+  font-weight:700;
+  color:var(--texto);
+  box-shadow:var(--sombra);
+  z-index:40;
+  white-space:nowrap;
+  pointer-events:none; /* enfeite, não atrapalha o toque */
+  animation:flutuar 3s ease-in-out infinite;
+}
+.btn-whats-flutuante{
+  position:fixed;
+  bottom:100px; /* fica acima da barra do carrinho */
+  right:16px;
+  width:56px;height:56px;
+  border-radius:50%;
+  background:#25D366;
+  color:#fff;
+  font-size:28px;
+  display:flex;align-items:center;justify-content:center;
+  text-decoration:none;
+  box-shadow:0 6px 16px rgba(37,211,102,.4);
+  z-index:40;
+  animation:flutuar 3s ease-in-out infinite;
+}
+
+/* ============================================================
+   RODAPÉ
+   ============================================================ */
+footer{
+  text-align:center;
+  padding:24px 20px 30px;
+  color:var(--texto-suave);
+  font-size:15px;
+}
+footer .aviso-fofo{
+  background:#F3EEFB;
+  border-radius:14px;
+  padding:12px 16px;
+  max-width:480px;
+  margin:0 auto 10px;
+  font-weight:600;
+  color:var(--texto);
+}
+
+/* ============================================================
+   TOAST (avisinhos que somem sozinhos)
+   ============================================================ */
+.toast{
+  position:fixed;
+  bottom:160px;
+  left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--texto);
+  color:#fff;
+  padding:12px 22px;
+  border-radius:999px;
+  font-weight:600;
+  font-size:16px;
+  z-index:100;
+  opacity:0;
+  transition:all .3s;
+  max-width:90vw;
+  text-align:center;
+  pointer-events:none;
+}
+.toast.visivel{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ============================================================
+   CONFETE 🎉 (CSS/JS puro, sem biblioteca)
+   ============================================================ */
+.confete{
+  position:fixed;
+  top:-12px;
+  width:10px;height:16px;
+  z-index:200;
+  pointer-events:none;
+  border-radius:3px;
+  animation:cairConfete linear forwards;
+}
+@keyframes cairConfete{
+  0%{transform:translateY(0) rotate(0deg);opacity:1;}
+  100%{transform:translateY(110vh) rotate(720deg);opacity:.6;}
+}
+
+/* Telas maiores: grid com mais colunas */
+@media(min-width:700px){
+  .grid-produtos{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
+  header h1{font-size:36px;}
+}
+</style>
+</head>
+<body>
+<!-- ============================================================
+     CABEÇALHO — logo flutuante, nome da loja e carrinho
+     ============================================================ -->
+<header>
+  <span class="logo-emoji">🛍️</span>
+  <h1 id="nome-loja">Girls Shop</h1>
+  <p class="frase">Feito por jovens, para jovens! ✨</p>
+  <button class="btn-carrinho-topo" id="btn-carrinho-topo" aria-label="Abrir carrinho">
+    🛒
+    <span class="badge-carrinho" id="badge-carrinho" style="display:none;">0</span>
+  </button>
+</header>
+
+<!-- Banner que só aparece no aniversário de uma sócia 🎂 -->
+<div class="banner-aniversario" id="banner-aniversario"></div>
+
+<!-- Faixa de benefícios -->
+<nav class="beneficios" aria-label="Benefícios">
+  <span class="chip-beneficio">👥 Pedido no grupo da loja</span>
+  <span class="chip-beneficio">🚚 Entrega combinadinha</span>
+  <span class="chip-beneficio">🛡️ Compra com os responsáveis</span>
+</nav>
+
+<!-- Filtros de categoria (gerados pelo JavaScript) -->
+<div class="filtros" id="filtros" aria-label="Filtrar por categoria"></div>
+
+<!-- Grid de produtos (gerado pelo JavaScript) -->
+<main class="grid-produtos" id="grid-produtos"></main>
+
+<!-- ⭐ CAIXA DE PEDIDO FINAL -->
+<section class="secao-pedido" id="secao-pedido">
+  <div class="caixa-pedido">
+    <h2>📝 Seu Pedido</h2>
+    <p class="dica">Escreva seu nome, copie o pedido e cole no grupo da loja! 💜</p>
+    <div class="passos-compra">
+      <span>1️⃣ Monte o carrinho</span>
+      <span>2️⃣ Copie o pedido</span>
+      <span>3️⃣ Cole no grupo 📲</span>
+    </div>
+    <input type="text" class="campo-nome" id="campo-nome" placeholder="Seu nome aqui... 😊" maxlength="40">
+    <textarea class="texto-pedido" id="texto-pedido" readonly
+      placeholder="Seu pedido aparece aqui quando você adicionar produtinhos! 🛒"></textarea>
+    <div class="botoes-pedido">
+      <button class="btn-copiar" id="btn-copiar">📋 COPIAR PEDIDO</button>
+    </div>
+    <p class="aviso-responsavel">🛡️ <b>Importante:</b> compras só com a permissão de um adulto responsável! 💜</p>
+  </div>
+</section>
+
+<!-- Rodapé com aviso fofo -->
+<footer>
+  <p class="aviso-fofo">Copie seu pedido e cole no grupo da loja — a gente confirma por lá! 💜</p>
+  <p>Girls Shop — feito com muito carinho ✨</p>
+</footer>
+
+<!-- Barra inferior do carrinho -->
+<div class="barra-carrinho" id="barra-carrinho">
+  <span class="barra-info" id="barra-info">🛒 0 itens • R$ 0,00</span>
+  <button class="btn-ver-pedido" id="btn-ver-pedido">Ver Pedido →</button>
+</div>
+
+<!-- Botão flutuante: portal pro grupo da loja! 👥 -->
+<span class="etiqueta-grupo">👥 Grupo da loja!</span>
+<a class="btn-whats-flutuante" id="btn-whats-flutuante" href="#" target="_blank"
+   rel="noopener" aria-label="Entrar no grupo da loja">💬</a>
+
+<!-- Fundo escuro atrás do drawer -->
+<div class="overlay" id="overlay"></div>
+
+<!-- Drawer lateral do carrinho -->
+<aside class="drawer" id="drawer" aria-label="Carrinho de compras">
+  <div class="drawer-header">
+    <h2>🛒 Seu Carrinho</h2>
+    <button class="btn-fechar-drawer" id="btn-fechar-drawer" aria-label="Fechar carrinho">✖️</button>
+  </div>
+  <div class="drawer-lista" id="drawer-lista"></div>
+  <div class="drawer-total">
+    <span>💰 Total</span>
+    <span id="drawer-total">R$ 0,00</span>
+  </div>
+</aside>
+
+<!-- Modal de detalhes do produto 🔍 -->
+<div class="modal-produto" id="modal-produto">
+  <div class="modal-fundo" id="modal-fundo" onclick="fecharDetalhes()"></div>
+  <div class="modal-caixa" id="modal-caixa"></div>
+</div>
+
+<!-- Avisinho que some sozinho -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   GIRLS SHOP — VITRINE PÚBLICA
+   Tudo em JavaScript puro, comentado em português simples 😊
+   ============================================================ */
+
+// ------------------------------------------------------------
+// CHAVES DO localStorage (as mesmas das outras páginas da loja!)
+// ------------------------------------------------------------
+const CHAVE_PRODUTOS = "girlsShop_produtos";
+const CHAVE_VENDAS   = "girlsShop_vendas";
+const CHAVE_LOG      = "girlsShop_log";
+const CHAVE_CONFIG   = "girlsShop_config";
+const CHAVE_CARRINHO = "girlsShop_carrinho";
+
+// ------------------------------------------------------------
+// FUNÇÕES UTILITÁRIAS (idênticas nas 3 páginas)
+// ------------------------------------------------------------
+
+// Verifica se o localStorage funciona neste navegador
+function storageDisponivel(){
+  try{
+    localStorage.setItem("__teste__","1");
+    localStorage.removeItem("__teste__");
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+// Lê uma chave do localStorage com segurança
+function lerJSON(chave, padrao){
+  if(!storageDisponivel()) return padrao;
+  try{
+    const texto = localStorage.getItem(chave);
+    return texto ? JSON.parse(texto) : padrao;
+  }catch(e){
+    return padrao; // se estiver quebrado, devolve o padrão
+  }
+}
+
+// Grava uma chave no localStorage com aviso gentil se der erro
+function gravarJSON(chave, valor){
+  if(!storageDisponivel()){
+    mostrarToast("Ops! Seu navegador não deixa salvar dados 😅");
+    return false;
+  }
+  try{
+    localStorage.setItem(chave, JSON.stringify(valor));
+    return true;
+  }catch(e){
+    mostrarToast("Ops! Memória cheia. Limpe dados do navegador 🤗");
+    return false;
+  }
+}
+
+// Lê e salva a lista de produtos
+function lerProdutos(){ return lerJSON(CHAVE_PRODUTOS, []); }
+function salvarProdutos(lista){ gravarJSON(CHAVE_PRODUTOS, lista); }
+
+// Transforma centavos em "R$ XX,XX" (ex: 2590 → "R$ 25,90")
+function formatarPreco(centavos){
+  return "R$ " + (centavos/100).toFixed(2).replace(".", ",");
+}
+
+// Grava um registro no log (máximo 50, mais recente primeiro)
+function gravarLog(acao, detalhe, motivo){
+  const log = lerJSON(CHAVE_LOG, []);
+  const registro = { data: new Date().toISOString(), acao: acao, detalhe: detalhe };
+  if(motivo) registro.motivo = motivo;
+  log.unshift(registro);          // coloca no começo da lista
+  gravarJSON(CHAVE_LOG, log.slice(0, 50)); // guarda só os 50 mais novos
+}
+
+// ------------------------------------------------------------
+// SEED INICIAL 🌱
+// Na primeira vez que a página abre, criamos produtos e vendas
+// de exemplo para a loja já nascer "viva".
+// ------------------------------------------------------------
+function carregarSeedSePreciso(){
+  const config = lerJSON(CHAVE_CONFIG, null);
+
+  // Se a seed já foi carregada, não faz nada
+  if(config && config.seedCarregado){
+    return config;
+  }
+
+  // Configuração padrão da loja
+  const novaConfig = {
+    nomeLoja: "Girls Shop",
+    whatsapp: "5511999999999", // as sócias trocam no admin!
+    pin: "1234",
+    metaMensal: 30000, // R$ 300,00 em centavos
+    aniversarios: ["15/03", "22/07"], // datas de exemplo (DD/MM)
+    seedCarregado: true
+  };
+
+  // Produtos de exemplo: preços em CENTAVOS, margem 50% a 150%
+  const agora = Date.now();
+  const produtosSeed = [
+    { id: agora-11, nome: "Kit Adesivos Fofos",      emoji: "🌸", categoria: "Papelaria",
+      custo: 500,  precoVenda: 1200, desconto: 0,  estoque: 10,
+      cor: "linear-gradient(135deg,#FBCFE8,#F472B6)", status: "disponivel", vendas: 4,
+      descricao: "Um pacotinho cheio de adesivos lindos pra colar no caderno, no celular e onde a imaginação mandar!" },
+    { id: agora-10, nome: "Caneta Gel Colorida",      emoji: "🖊️", categoria: "Papelaria",
+      custo: 300,  precoVenda: 800,  desconto: 25, estoque: 15,
+      cor: "linear-gradient(135deg,#A5F3FC,#22D3EE)", status: "disponivel", vendas: 7,
+      descricao: "Escreve super macio e deixa o caderno todo colorido! Perfeita pra títulos e desenhos." },
+    { id: agora-9,  nome: "Caderno de Unicórnio",     emoji: "🦄", categoria: "Papelaria",
+      custo: 1200, precoVenda: 2500, desconto: 0,  estoque: 6,
+      cor: "linear-gradient(135deg,#DDD6FE,#8B5CF6)", status: "disponivel", vendas: 3,
+      descricao: "Capa mágica de unicórnio e folhas esperando suas melhores ideias e desenhos!" },
+    { id: agora-8,  nome: "Pulseira da Amizade",      emoji: "📿", categoria: "Acessórios",
+      custo: 400,  precoVenda: 1000, desconto: 0,  estoque: 20,
+      cor: "linear-gradient(135deg,#FDE68A,#FBBF24)", status: "disponivel", vendas: 9,
+      descricao: "A clássica pulseira que fortalece amizades! Leve duas e presenteie sua melhor amiga 💛" },
+    { id: agora-7,  nome: "Tiara de Laço",            emoji: "🎀", categoria: "Acessórios",
+      custo: 600,  precoVenda: 1500, desconto: 20, estoque: 8,
+      cor: "linear-gradient(135deg,#FDA4AF,#FB7185)", status: "disponivel", vendas: 5,
+      descricao: "O laço perfeito pra deixar qualquer look ainda mais fofo. Confortável o dia todo!" },
+    { id: agora-6,  nome: "Chaveiro de Pelúcia Mini", emoji: "🧸", categoria: "Acessórios",
+      custo: 800,  precoVenda: 1800, desconto: 0,  estoque: 2, // estoque baixo de propósito!
+      cor: "linear-gradient(135deg,#FED7AA,#FB923C)", status: "disponivel", vendas: 6,
+      descricao: "Um ursinho de pelúcia mini que vai com você pra todo lugar, pendurado na mochila!" },
+    { id: agora-5,  nome: "Gloss Labial Frutinha",    emoji: "💄", categoria: "Beleza",
+      custo: 700,  precoVenda: 1600, desconto: 0,  estoque: 12,
+      cor: "linear-gradient(135deg,#FECACA,#EF4444)", status: "disponivel", vendas: 8,
+      descricao: "Brilho com cheirinho de fruta! Lábios macios e um sorriso ainda mais lindo." },
+    { id: agora-4,  nome: "Espelhinho de Bolso",      emoji: "🪞", categoria: "Beleza",
+      custo: 500,  precoVenda: 1300, desconto: 15, estoque: 9,
+      cor: "linear-gradient(135deg,#99F6E4,#2DD4BF)", status: "disponivel", vendas: 2,
+      descricao: "Cabe no bolso e na bolsa! Pra conferir se tá tudo lindo a qualquer hora ✨" },
+    { id: agora-3,  nome: "Squishy de Moranguinho",   emoji: "🍓", categoria: "Brinquedos",
+      custo: 900,  precoVenda: 2000, desconto: 0,  estoque: 0, // esgotado de propósito!
+      cor: "linear-gradient(135deg,#FBCFE8,#EC4899)", status: "esgotado", vendas: 10,
+      descricao: "Aperte, aperte e aperte! O squishy antiestresse mais cheiroso da turma 🍓" },
+    { id: agora-2,  nome: "Mini Pelúcia Capivara",    emoji: "🦫", categoria: "Brinquedos",
+      custo: 1500, precoVenda: 3200, desconto: 0,  estoque: 5,
+      cor: "linear-gradient(135deg,#E7E5E4,#A8A29E)", status: "disponivel", vendas: 4,
+      descricao: "A capivara mais fofa do Brasil em versão mini! Abraço garantido 🤎" },
+    { id: agora-1,  nome: "Pop It Arco-Íris",         emoji: "🌈", categoria: "Brinquedos",
+      custo: 600,  precoVenda: 1400, desconto: 0,  estoque: 7,
+      cor: "linear-gradient(135deg,#C7D2FE,#818CF8)", status: "pausado", vendas: 1,
+      descricao: "Plim, plim, plim! Aperte as bolhinhas coloridas e relaxe. Vicia (de um jeito bom)!" }
+  ];
+
+  // Vendas de exemplo em datas variadas do mês atual
+  const hoje = new Date();
+  function diaDoMes(dia, hora){
+    const d = new Date(hoje.getFullYear(), hoje.getMonth(), dia, hora, 30);
+    // Se o dia ainda não chegou, usa o mês passado
+    if(d > hoje){ d.setMonth(d.getMonth()-1); }
+    return d.toISOString();
+  }
+  const vendasSeed = [
+    { id: agora-500, data: diaDoMes(2, 14),
+      itens: [{ produtoId: agora-11, nome: "Kit Adesivos Fofos", emoji: "🌸", qtd: 2,
+                precoUnit: 1200, custoUnit: 500, desconto: 0 }],
+      total: 2400, lucro: 1400 },
+    { id: agora-400, data: diaDoMes(6, 16),
+      itens: [{ produtoId: agora-8, nome: "Pulseira da Amizade", emoji: "📿", qtd: 3,
+                precoUnit: 1000, custoUnit: 400, desconto: 0 }],
+      total: 3000, lucro: 1800 },
+    { id: agora-300, data: diaDoMes(11, 10),
+      itens: [{ produtoId: agora-5, nome: "Gloss Labial Frutinha", emoji: "💄", qtd: 1,
+                precoUnit: 1600, custoUnit: 700, desconto: 0 },
+              { produtoId: agora-10, nome: "Caneta Gel Colorida", emoji: "🖊️", qtd: 2,
+                precoUnit: 600, custoUnit: 300, desconto: 25 }],
+      total: 2800, lucro: 1500 },
+    { id: agora-200, data: diaDoMes(15, 18),
+      itens: [{ produtoId: agora-9, nome: "Caderno de Unicórnio", emoji: "🦄", qtd: 1,
+                precoUnit: 2500, custoUnit: 1200, desconto: 0 }],
+      total: 2500, lucro: 1300 }
+  ];
+
+  // Grava tudo na primeira execução
+  salvarProdutos(produtosSeed);
+  gravarJSON(CHAVE_VENDAS, vendasSeed);
+  gravarJSON(CHAVE_CONFIG, novaConfig);
+  gravarLog("🌱 Loja criada", "A Girls Shop nasceu com a vitrine cheia de novidades!");
+
+  return novaConfig;
+}
+
+// ------------------------------------------------------------
+// VARIÁVEIS GLOBAIS DA PÁGINA
+// ------------------------------------------------------------
+let config = carregarSeedSePreciso(); // configurações da loja
+let categoriaAtiva = "Todos";         // filtro selecionado
+let carrinho = lerJSON(CHAVE_CARRINHO, []); // [{id, qtd}]
+
+// Calcula o preço final de um produto (com desconto aplicado)
+function precoFinal(produto){
+  if(produto.desconto > 0){
+    return Math.round(produto.precoVenda * (100 - produto.desconto) / 100);
+  }
+  return produto.precoVenda;
+}
+
+// Produtos que o cliente pode ver: disponíveis e com estoque
+function produtosVisiveis(){
+  return lerProdutos().filter(function(p){
+    return p.status === "disponivel" && p.estoque > 0;
+  });
+}
+
+// ------------------------------------------------------------
+// TOAST — avisinho que aparece e some sozinho
+// ------------------------------------------------------------
+let timerToast = null;
+function mostrarToast(mensagem){
+  const toast = document.getElementById("toast");
+  toast.textContent = mensagem;
+  toast.classList.add("visivel");
+  clearTimeout(timerToast);
+  timerToast = setTimeout(function(){ toast.classList.remove("visivel"); }, 3000);
+}
+
+// ------------------------------------------------------------
+// CONFETE 🎉 — chuvinha de papel colorido em CSS/JS puro
+// ------------------------------------------------------------
+function soltarConfete(quantidade){
+  const cores = ["#8B5CF6","#FBBF24","#2DD4BF","#FB7185","#FFFFFF"];
+  for(let i = 0; i < quantidade; i++){
+    const pedaco = document.createElement("div");
+    pedaco.className = "confete";
+    pedaco.style.left = Math.random() * 100 + "vw";
+    pedaco.style.background = cores[Math.floor(Math.random() * cores.length)];
+    pedaco.style.animationDuration = (2 + Math.random() * 2) + "s";
+    pedaco.style.animationDelay = (Math.random() * 0.5) + "s";
+    document.body.appendChild(pedaco);
+    // Limpa o confete depois que cai
+    setTimeout(function(){ pedaco.remove(); }, 5000);
+  }
+}
+
+// Foto real ou emoji fofinho 📸
+// Se o produto tem "foto" (link), usa a imagem. Se o link quebrar,
+// o onerror troca de volta pro emoji — a vitrine nunca fica sem rosto!
+function fotoProdutoHTML(p){
+  if(p.foto){
+    return '<img src="' + p.foto + '" alt="' + p.nome + '" loading="lazy" ' +
+           'data-emoji="' + p.emoji + '" onerror="this.outerHTML=this.dataset.emoji">';
+  }
+  return p.emoji;
+}
+
+// ------------------------------------------------------------
+// MODAL DE DETALHES 🔍 — tocou no produto, ele conta tudo!
+// ------------------------------------------------------------
+function abrirDetalhes(id){
+  const p = lerProdutos().find(function(x){ return x.id === id; });
+  if(!p) return;
+
+  const final = precoFinal(p);
+  const noCarrinho = qtdNoCarrinho(p.id);
+  const lotado = noCarrinho >= p.estoque; // já pegou tudo que tem?
+
+  // Preço: com desconto, mostra o antigo riscado
+  let precoHTML = '<span class="preco-atual">' + formatarPreco(final) + '</span>';
+  if(p.desconto > 0){
+    precoHTML = '<span class="preco-antigo">' + formatarPreco(p.precoVenda) + '</span>' +
+                '<span class="preco-atual com-desconto">' + formatarPreco(final) + '</span>';
+  }
+
+  const caixa = document.getElementById("modal-caixa");
+  caixa.innerHTML =
+    '<button class="modal-fechar" id="modal-btn-fechar" aria-label="Fechar detalhes">✖️</button>' +
+    '<div class="modal-foto" style="background:' + p.cor + ';">' + fotoProdutoHTML(p) + '</div>' +
+    '<div class="modal-corpo">' +
+      '<div class="modal-nome">' + p.nome + ' ' + p.emoji + '</div>' +
+      '<div class="modal-categoria">' + p.categoria + '</div>' +
+      (p.descricao ? '<p class="modal-descricao">' + p.descricao + '</p>' : '') +
+      '<div class="modal-precos">' + precoHTML + '</div>' +
+      (p.estoque <= 3 ? '<div class="modal-estoque">⏳ Só restam ' + p.estoque + '!</div>' : '') +
+      '<button class="btn-adicionar" id="modal-btn-add" ' + (lotado ? "disabled" : "") + '>' +
+        (lotado ? "No carrinho! ✅" : "Adicionar ao carrinho 🛒") +
+      '</button>' +
+    '</div>';
+
+  document.getElementById("modal-btn-fechar").onclick = fecharDetalhes;
+  const btnAdd = document.getElementById("modal-btn-add");
+  if(!lotado){
+    btnAdd.onclick = function(){
+      adicionarAoCarrinho(p.id);
+      abrirDetalhes(p.id); // redesenha pra mostrar "No carrinho! ✅"
+    };
+  }
+
+  document.getElementById("modal-produto").classList.add("aberto");
+}
+
+function fecharDetalhes(){
+  document.getElementById("modal-produto").classList.remove("aberto");
+}
+
+// ------------------------------------------------------------
+// FILTROS DE CATEGORIA — chips gerados só com o que existe
+// ------------------------------------------------------------
+function desenharFiltros(){
+  const visiveis = produtosVisiveis();
+  // Pega cada categoria uma única vez
+  const categorias = [];
+  visiveis.forEach(function(p){
+    if(categorias.indexOf(p.categoria) === -1) categorias.push(p.categoria);
+  });
+
+  const area = document.getElementById("filtros");
+  area.innerHTML = "";
+
+  const lista = ["Todos"].concat(categorias);
+  lista.forEach(function(cat){
+    const botao = document.createElement("button");
+    botao.className = "chip-filtro" + (cat === categoriaAtiva ? " ativo" : "");
+    botao.textContent = cat === "Todos" ? "✨ Todos" : cat;
+    botao.onclick = function(){
+      categoriaAtiva = cat;
+      desenharFiltros();
+      desenharProdutos();
+    };
+    area.appendChild(botao);
+  });
+}
+
+// ------------------------------------------------------------
+// GRID DE PRODUTOS — os cards da vitrine
+// ------------------------------------------------------------
+function desenharProdutos(){
+  const grid = document.getElementById("grid-produtos");
+  grid.innerHTML = "";
+
+  let lista = produtosVisiveis();
+  if(categoriaAtiva !== "Todos"){
+    lista = lista.filter(function(p){ return p.categoria === categoriaAtiva; });
+  }
+
+  // Estado vazio fofo 🧹
+  if(lista.length === 0){
+    grid.innerHTML =
+      '<div class="vitrine-vazia" style="grid-column:1/-1;">' +
+      '<span class="emoji-grande">🧹✨</span>' +
+      'A vitrine está sendo arrumada! Volte logo 💜</div>';
+    return;
+  }
+
+  lista.forEach(function(p){
+    const final = precoFinal(p);
+    const noCarrinho = qtdNoCarrinho(p.id);
+    const lotado = noCarrinho >= p.estoque; // já pegou tudo que tem?
+
+    const card = document.createElement("article");
+    card.className = "card-produto";
+
+    // Badges de oferta
+    let badges = "";
+    if(p.desconto > 0){
+      badges = '<span class="badge-oferta">🔥 OFERTA</span>' +
+               '<span class="badge-desconto">-' + p.desconto + '%</span>';
+    }
+
+    // Preço: se tem desconto, mostra o antigo riscado
+    let precoHTML = "";
+    if(p.desconto > 0){
+      precoHTML = '<span class="preco-antigo">' + formatarPreco(p.precoVenda) + '</span>' +
+                  '<span class="preco-atual com-desconto">' + formatarPreco(final) + '</span>';
+    }else{
+      precoHTML = '<span class="preco-atual">' + formatarPreco(final) + '</span>';
+    }
+
+    // Aviso de últimas unidades
+    let avisoEstoque = "";
+    if(p.estoque <= 3){
+      avisoEstoque = '<div class="card-categoria" style="color:var(--coral);font-weight:700;">' +
+                     '⏳ Só restam ' + p.estoque + '!</div>';
+    }
+
+    card.innerHTML =
+      badges +
+      '<div class="card-foto" style="background:' + p.cor + ';" title="Toque pra ver detalhes! 🔍">' +
+        fotoProdutoHTML(p) +
+      '</div>' +
+      '<div class="card-info">' +
+        '<div class="card-nome" style="cursor:pointer;">' + p.nome + '</div>' +
+        '<div class="card-categoria">' + p.categoria + '</div>' +
+        avisoEstoque +
+        '<div class="card-precos">' + precoHTML + '</div>' +
+        '<button class="btn-adicionar" ' + (lotado ? "disabled" : "") + '>' +
+          (lotado ? "No carrinho! ✅" : "Adicionar 🛒") +
+        '</button>' +
+      '</div>';
+
+    if(!lotado){
+      const botao = card.querySelector(".btn-adicionar");
+      botao.onclick = function(){ adicionarAoCarrinho(p.id); };
+    }
+
+    // Toque na foto ou no nome: abre o modal de detalhes 🔍
+    card.querySelector(".card-foto").onclick = function(){ abrirDetalhes(p.id); };
+    card.querySelector(".card-nome").onclick = function(){ abrirDetalhes(p.id); };
+
+    grid.appendChild(card);
+  });
+}
+
+// ------------------------------------------------------------
+// CARRINHO 🛒 — salvo no localStorage pra não sumir
+// ------------------------------------------------------------
+function qtdNoCarrinho(id){
+  const item = carrinho.find(function(i){ return i.id === id; });
+  return item ? item.qtd : 0;
+}
+
+function salvarCarrinho(){
+  gravarJSON(CHAVE_CARRINHO, carrinho);
+}
+
+function adicionarAoCarrinho(id){
+  const produto = lerProdutos().find(function(p){ return p.id === id; });
+  if(!produto) return;
+
+  const item = carrinho.find(function(i){ return i.id === id; });
+  if(item){
+    if(item.qtd >= produto.estoque){
+      mostrarToast("Você já pegou tudo que temos de " + produto.nome + " 😅");
+      return;
+    }
+    item.qtd++;
+  }else{
+    carrinho.push({ id: id, qtd: 1 });
+  }
+
+  salvarCarrinho();
+  mostrarToast(produto.emoji + " " + produto.nome + " no carrinho!");
+  animarBadge();
+  atualizarTudoCarrinho();
+  desenharProdutos(); // atualiza o botão "Adicionar"
+}
+
+function mudarQuantidade(id, delta){
+  const produto = lerProdutos().find(function(p){ return p.id === id; });
+  const item = carrinho.find(function(i){ return i.id === id; });
+  if(!item || !produto) return;
+
+  item.qtd += delta;
+  if(item.qtd <= 0){
+    removerDoCarrinho(id);
+    return;
+  }
+  if(item.qtd > produto.estoque){
+    item.qtd = produto.estoque;
+    mostrarToast("Só temos " + produto.estoque + " de " + produto.nome + " 😅");
+  }
+  salvarCarrinho();
+  atualizarTudoCarrinho();
+  desenharProdutos();
+}
+
+function removerDoCarrinho(id){
+  carrinho = carrinho.filter(function(i){ return i.id !== id; });
+  salvarCarrinho();
+  atualizarTudoCarrinho();
+  desenharProdutos();
+}
+
+// Itens do carrinho com os dados completos do produto
+function itensCarrinhoCompletos(){
+  const produtos = lerProdutos();
+  const completo = [];
+  carrinho.forEach(function(item){
+    const p = produtos.find(function(x){ return x.id === item.id; });
+    if(p) completo.push({ produto: p, qtd: item.qtd });
+  });
+  return completo;
+}
+
+function totalCarrinho(){
+  return itensCarrinhoCompletos().reduce(function(soma, item){
+    return soma + precoFinal(item.produto) * item.qtd;
+  }, 0);
+}
+
+// Animação "bump" no badge do carrinho
+function animarBadge(){
+  const badge = document.getElementById("badge-carrinho");
+  badge.classList.remove("bump");
+  void badge.offsetWidth; // truque pra reiniciar a animação
+  badge.classList.add("bump");
+}
+
+// Atualiza badge, barra inferior, drawer e caixa de pedido
+function atualizarTudoCarrinho(){
+  const itens = itensCarrinhoCompletos();
+  const totalItens = itens.reduce(function(s, i){ return s + i.qtd; }, 0);
+  const total = totalCarrinho();
+
+  // Badge do topo
+  const badge = document.getElementById("badge-carrinho");
+  badge.style.display = totalItens > 0 ? "flex" : "none";
+  badge.textContent = totalItens;
+
+  // Barra inferior
+  const barra = document.getElementById("barra-carrinho");
+  barra.classList.toggle("visivel", totalItens > 0);
+  document.getElementById("barra-info").textContent =
+    "🛒 " + totalItens + (totalItens === 1 ? " item" : " itens") + " • " + formatarPreco(total);
+
+  // Drawer
+  desenharDrawer();
+
+  // Caixa de pedido
+  desenharPedido();
+}
+
+// Desenha a lista dentro do drawer lateral
+function desenharDrawer(){
+  const lista = document.getElementById("drawer-lista");
+  const itens = itensCarrinhoCompletos();
+  lista.innerHTML = "";
+
+  if(itens.length === 0){
+    lista.innerHTML = '<div class="carrinho-vazio-msg">Seu carrinho está vazio...<br>Bora escolher coisinhas lindas? 🥰</div>';
+  }
+
+  itens.forEach(function(item){
+    const p = item.produto;
+    const linha = document.createElement("div");
+    linha.className = "item-carrinho";
+    linha.innerHTML =
+      '<div class="item-emoji" style="background:' + p.cor + ';">' + p.emoji + '</div>' +
+      '<div class="item-detalhes">' +
+        '<div class="item-nome">' + p.nome + '</div>' +
+        '<div class="item-preco">' + formatarPreco(precoFinal(p)) + ' cada</div>' +
+      '</div>' +
+      '<div class="item-controles">' +
+        '<button class="btn-qtd btn-menos" aria-label="Diminuir">−</button>' +
+        '<span class="qtd-numero">' + item.qtd + '</span>' +
+        '<button class="btn-qtd btn-mais" aria-label="Aumentar" ' +
+          (item.qtd >= p.estoque ? "disabled" : "") + '>+</button>' +
+        '<button class="btn-lixeira" aria-label="Remover">🗑️</button>' +
+      '</div>';
+
+    linha.querySelector(".btn-menos").onclick = function(){ mudarQuantidade(p.id, -1); };
+    const btnMais = linha.querySelector(".btn-mais");
+    if(!btnMais.disabled) btnMais.onclick = function(){ mudarQuantidade(p.id, 1); };
+    linha.querySelector(".btn-lixeira").onclick = function(){ removerDoCarrinho(p.id); };
+
+    lista.appendChild(linha);
+  });
+
+  document.getElementById("drawer-total").textContent = formatarPreco(totalCarrinho());
+}
+
+// Valida o carrinho ao abrir a página: tira o que sumiu da vitrine
+function validarCarrinhoContraEstoque(){
+  const produtos = lerProdutos();
+  const novoCarrinho = [];
+  let removeuAlgo = false;
+
+  carrinho.forEach(function(item){
+    const p = produtos.find(function(x){ return x.id === item.id; });
+    // Produto sumiu ou esgotou? Tira do carrinho com aviso gentil
+    if(!p || p.status !== "disponivel" || p.estoque <= 0){
+      mostrarToast("Ops! " + (p ? p.nome : "Um produto") + " acabou de sair da vitrine 😅");
+      removeuAlgo = true;
+      return;
+    }
+    // Se a quantidade passou do estoque, ajusta
+    if(item.qtd > p.estoque){
+      item.qtd = p.estoque;
+      mostrarToast("Ajustamos a quantidade de " + p.nome + " 🤗");
+      removeuAlgo = true;
+    }
+    novoCarrinho.push(item);
+  });
+
+  carrinho = novoCarrinho;
+  if(removeuAlgo) salvarCarrinho();
+}
+
+// ------------------------------------------------------------
+// ⭐ CAIXA DE PEDIDO FINAL — o coração da venda!
+// ------------------------------------------------------------
+function montarTextoPedido(){
+  const itens = itensCarrinhoCompletos();
+  if(itens.length === 0) return "";
+
+  const nome = document.getElementById("campo-nome").value.trim() || "___";
+  const nomeLoja = config.nomeLoja || "Girls Shop";
+
+  let linhas = [];
+  linhas.push("═══════════════════════════");
+  linhas.push("📝 MEU PEDIDO — " + nomeLoja);
+  linhas.push("═══════════════════════════");
+  linhas.push("👤 Nome do cliente: " + nome);
+  linhas.push("");
+
+  itens.forEach(function(item, indice){
+    const p = item.produto;
+    const unitario = precoFinal(p);
+    const subtotal = unitario * item.qtd;
+    linhas.push((indice + 1) + ". " + p.nome + " " + p.emoji);
+    linhas.push("   Qtd: " + item.qtd + " | Valor unitário: " + formatarPreco(unitario));
+    linhas.push("   Subtotal: " + formatarPreco(subtotal));
+    linhas.push("");
+  });
+
+  linhas.push("───────────────────────────");
+  linhas.push("💰 TOTAL: " + formatarPreco(totalCarrinho()));
+  linhas.push("═══════════════════════════");
+  linhas.push("🛡️ Compra com a ciência e permissão");
+  linhas.push("dos meus responsáveis! ✅");
+
+  return linhas.join("\n");
+}
+
+function desenharPedido(){
+  const caixa = document.getElementById("texto-pedido");
+  const texto = montarTextoPedido();
+  caixa.value = texto;
+  caixa.placeholder = texto ? "" : "Seu pedido aparece aqui quando você adicionar produtinhos! 🛒";
+}
+
+// Copia o pedido (com plano B pra navegadores antigos)
+function copiarPedido(){
+  const texto = montarTextoPedido();
+  if(!texto){
+    mostrarToast("Adicione produtinhos primeiro! 🛒");
+    return;
+  }
+
+  // Jeito moderno
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(texto).then(function(){
+      soltarConfete(30); // festinha merecida! 🎉
+      mostrarToast("Pedido copiado! Agora cole no grupo da loja 📋💜");
+    }).catch(function(){ copiarPedidoPlanoB(texto); });
+  }else{
+    copiarPedidoPlanoB(texto);
+  }
+}
+
+// Plano B: seleciona o texto e usa o comando antigo
+function copiarPedidoPlanoB(texto){
+  const caixa = document.getElementById("texto-pedido");
+  caixa.value = texto;
+  caixa.focus();
+  caixa.select();
+  try{
+    document.execCommand("copy");
+    soltarConfete(30);
+    mostrarToast("Pedido copiado! Agora cole no grupo da loja 📋💜");
+  }catch(e){
+    mostrarToast("Ops! Copie o texto com o dedinho 🤗");
+  }
+}
+
+// ------------------------------------------------------------
+// MODO ANIVERSÁRIO 🎂 — se hoje é aniversário de uma sócia!
+// ------------------------------------------------------------
+function verificarAniversario(){
+  const aniversarios = (config && config.aniversarios) || [];
+  const hoje = new Date();
+  const diaMes = String(hoje.getDate()).padStart(2, "0") + "/" +
+                 String(hoje.getMonth() + 1).padStart(2, "0");
+
+  if(aniversarios.indexOf(diaMes) !== -1){
+    const banner = document.getElementById("banner-aniversario");
+    banner.textContent = "🎂 HOJE É NOSSO ANIVERSÁRIO! Compre e comemore com a gente! 🥳🎉";
+    banner.style.display = "block";
+    soltarConfete(60); // chuva de confete de festa!
+  }
+}
+
+// ------------------------------------------------------------
+// ☁️ NUVEM — se a loja tiver o Link da Nuvem configurado, a
+// vitrine busca as novidades da Planilha Viva! Sem nuvem (ou
+// sem internet), segue funcionando com os dados do aparelho. 🪂
+// ------------------------------------------------------------
+// Link da nuvem gravado pelo arquiteto 🌙 (as sócias podem trocar no admin ⚙️)
+const LINK_NUVEM_PADRAO = "https://script.google.com/macros/s/AKfycbxw5SjeYtgLYU416slAdyj5ybTwe3_hHHVNtw2pL7-iP_MvW8bLZL773NprCBJJubepkQ/exec";
+function urlNuvem(){
+  try{ return (config.linkNuvem || LINK_NUVEM_PADRAO).trim(); }catch(e){ return LINK_NUVEM_PADRAO; }
+}
+function temNuvem(){ return /^https:\/\/script\.google(macros)?\.com\//.test(urlNuvem()); }
+
+function puxarDaNuvem(){
+  if(!temNuvem()) return;
+  fetch(urlNuvem() + "?acao=ler&t=" + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d || !d.ok) return;
+      if((d.atualizadoEm || 0) <= (config.atualizadoEm || 0)) return; // já está em dia
+      if(d.produtos && d.produtos.length) salvarProdutos(d.produtos);
+      const cfgNova = d.config || {};
+      cfgNova.linkNuvem = config.linkNuvem; // o link mora no aparelho!
+      cfgNova.atualizadoEm = d.atualizadoEm;
+      cfgNova.seedCarregado = true;
+      gravarJSON(CHAVE_CONFIG, cfgNova);
+      config = cfgNova;
+      // Redesenha tudo com as novidades da planilha! ✨
+      document.getElementById("nome-loja").textContent = config.nomeLoja || "Girls Shop";
+      document.title = (config.nomeLoja || "Girls Shop") + " — Vitrine";
+      validarCarrinhoContraEstoque();
+      desenharFiltros();
+      desenharProdutos();
+      atualizarTudoCarrinho();
+    })
+    .catch(function(){ /* sem internet? a vitrine segue local 💜 */ });
+}
+
+// ------------------------------------------------------------
+// LIGAÇÃO DOS BOTÕES E INÍCIO DA PÁGINA
+// ------------------------------------------------------------
+function abrirDrawer(){
+  document.getElementById("drawer").classList.add("aberto");
+  document.getElementById("overlay").classList.add("aberto");
+}
+function fecharDrawer(){
+  document.getElementById("drawer").classList.remove("aberto");
+  document.getElementById("overlay").classList.remove("aberto");
+}
+
+document.getElementById("btn-carrinho-topo").onclick = abrirDrawer;
+document.getElementById("btn-fechar-drawer").onclick = fecharDrawer;
+document.getElementById("overlay").onclick = fecharDrawer;
+
+document.getElementById("btn-ver-pedido").onclick = function(){
+  fecharDrawer();
+  document.getElementById("secao-pedido").scrollIntoView({ behavior: "smooth" });
+};
+
+document.getElementById("btn-copiar").onclick = copiarPedido;
+
+// Quando digita o nome, o pedido se atualiza sozinho
+document.getElementById("campo-nome").addEventListener("input", desenharPedido);
+
+// ------------------------------------------------------------
+// INÍCIO — prepara tudo quando a página abre
+// ------------------------------------------------------------
+(function iniciar(){
+  // Nome da loja vindo das configurações
+  document.getElementById("nome-loja").textContent = config.nomeLoja || "Girls Shop";
+  document.title = (config.nomeLoja || "Girls Shop") + " — Vitrine";
+
+  // Botão flutuante = portal pro grupo da loja! 👥
+  // Com grupo configurado: abre o convite do grupo.
+  // Sem grupo: copia um convite fofinho pra mandar pras amigas.
+  const btnGrupo = document.getElementById("btn-whats-flutuante");
+  if(config.linkGrupo){
+    btnGrupo.href = config.linkGrupo;
+  }else{
+    btnGrupo.href = "#";
+    btnGrupo.removeAttribute("target");
+    btnGrupo.onclick = function(e){
+      e.preventDefault();
+      const convite = "Vem ver a vitrine da " + (config.nomeLoja || "Girls Shop") +
+                      "! Coisinhas lindas te esperando 🛍️💜";
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(convite).then(function(){
+          mostrarToast("Convite copiado! Mande pras amigas 💜");
+        }).catch(function(){ mostrarToast(convite); });
+      }else{
+        mostrarToast(convite);
+      }
+    };
+  }
+
+  validarCarrinhoContraEstoque(); // limpa o que saiu da vitrine
+  verificarAniversario();         // 🎂 festa se for o dia!
+  desenharFiltros();
+  desenharProdutos();
+  atualizarTudoCarrinho();
+  puxarDaNuvem();                 // ☁️ busca novidades da Planilha Viva!
+})();
+</script>
+</body>
+</html>
+<!-- ✅ Arquivo completo -->

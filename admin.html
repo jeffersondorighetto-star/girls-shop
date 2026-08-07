@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel — Girls Shop 💜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   🎨 VARIÁVEIS — mude aqui para personalizar as cores!
+   ============================================================ */
+:root{
+  --lilas:#8B5CF6;
+  --lilas-claro:#C4B5FD;
+  --amarelo:#FBBF24;
+  --verde-agua:#2DD4BF;
+  --coral:#FB7185;
+  --fundo:#F5F3FF;
+  --cartao:#FFFFFF;
+  --texto:#3B2E5A;
+  --texto-suave:#7C7299;
+  --verde:#16A34A;
+  --cinza:#9CA3AF;
+  --raio:20px;
+  --sombra:0 4px 14px rgba(139,92,246,.15);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:'Baloo 2',cursive;
+  background:var(--fundo);
+  color:var(--texto);
+  font-size:17px;
+  min-height:100vh;
+  padding-bottom:120px;
+}
+h1,h2,h3{font-weight:800}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:14px;font-size:16px;min-height:44px;min-width:44px;font-weight:700}
+input,select{font-family:inherit;font-size:16px;padding:12px 14px;border:2px solid var(--lilas-claro);border-radius:14px;width:100%;background:#fff;color:var(--texto);min-height:44px}
+input:focus,select:focus{outline:none;border-color:var(--lilas)}
+label{font-weight:700;display:block;margin:10px 0 4px}
+
+/* ---------- CABEÇALHO ---------- */
+.topo{
+  background:linear-gradient(135deg,var(--lilas),var(--coral));
+  color:#fff;padding:18px 16px 26px;text-align:center;
+  border-radius:0 0 28px 28px;
+}
+.topo h1{font-size:24px}
+.topo p{opacity:.9;font-size:15px}
+.aviso-pin{
+  background:var(--amarelo);color:#5b4300;font-weight:700;
+  border-radius:12px;padding:8px 12px;margin:10px auto 0;
+  display:inline-block;font-size:14px;
+}
+
+/* ---------- ABAS ---------- */
+.abas{
+  display:flex;gap:8px;overflow-x:auto;padding:14px 12px 6px;
+  position:sticky;top:0;background:var(--fundo);z-index:20;
+}
+.abas button{
+  background:#fff;color:var(--texto-suave);padding:10px 14px;
+  border:2px solid transparent;white-space:nowrap;flex:0 0 auto;
+}
+.abas button.ativa{
+  background:var(--lilas);color:#fff;box-shadow:var(--sombra);
+  transform:scale(1.04);
+}
+.aba{display:none;padding:12px 14px;animation:aparecer .3s ease}
+.aba.visivel{display:block}
+@keyframes aparecer{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ---------- CARDS GENÉRICOS ---------- */
+.cartao{background:var(--cartao);border-radius:var(--raio);box-shadow:var(--sombra);padding:16px;margin-bottom:14px}
+.resumo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.resumo-item{background:#fff;border-radius:16px;padding:12px;text-align:center;box-shadow:var(--sombra)}
+.resumo-item .num{font-size:22px;font-weight:800}
+.resumo-item .rot{font-size:13px;color:var(--texto-suave);font-weight:600}
+
+/* ---------- LISTA DE PRODUTOS ---------- */
+.produto{border:3px solid var(--verde);border-radius:var(--raio);background:#fff;padding:14px;margin-bottom:12px;box-shadow:var(--sombra)}
+.produto.esgotado{border-color:var(--coral);animation:pulsaBorda 1.4s infinite}
+.produto.baixo{border-color:var(--amarelo)}
+.produto.pausado{border-color:var(--cinza);opacity:.65}
+@keyframes pulsaBorda{0%,100%{box-shadow:0 0 0 0 rgba(251,113,133,.5)}50%{box-shadow:0 0 0 8px rgba(251,113,133,0)}}
+.prod-topo{display:flex;align-items:center;gap:12px}
+.prod-emoji{width:54px;height:54px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;flex:0 0 54px}
+.prod-nome{font-weight:800;font-size:18px;line-height:1.2}
+.prod-sub{font-size:13px;color:var(--texto-suave);font-weight:600}
+.selo{display:inline-block;font-size:12px;font-weight:800;padding:3px 10px;border-radius:99px;margin-top:4px}
+.selo.disponivel{background:#D1FAE5;color:#065F46}
+.selo.esgotado{background:#FFE4E6;color:#9F1239}
+.selo.pausado{background:#E5E7EB;color:#4B5563}
+.selo.removido{background:#E5E7EB;color:#6B7280}
+.selo.oferta{background:var(--amarelo);color:#5b4300;animation:pulsaBorda 1.4s infinite}
+.prod-valores{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0;text-align:center}
+.prod-valores .v{background:var(--fundo);border-radius:12px;padding:8px 4px}
+.prod-valores .v b{display:block;font-size:16px}
+.prod-valores .v span{font-size:12px;color:var(--texto-suave);font-weight:600}
+.prod-botoes{display:flex;flex-wrap:wrap;gap:8px}
+.prod-botoes button{padding:8px 12px;font-size:14px;flex:1 1 auto}
+.btn-lilas{background:var(--lilas);color:#fff}
+.btn-cinza{background:#EDE9FE;color:var(--texto)}
+.btn-troca{background:linear-gradient(135deg,var(--coral),var(--amarelo));color:#fff;font-weight:800;animation:pulsaBorda 1.4s infinite}
+
+/* ---------- TELA DO PIN ---------- */
+#telaPin{
+  position:fixed;inset:0;z-index:100;
+  background:linear-gradient(160deg,var(--lilas),var(--coral));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;text-align:center;color:#fff;
+}
+#telaPin h1{font-size:26px;margin-bottom:4px}
+#telaPin p{margin-bottom:18px;opacity:.95}
+.bolinhas{display:flex;gap:14px;margin-bottom:20px}
+.bolinha{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.35);transition:.2s}
+.bolinha.cheia{background:var(--amarelo);transform:scale(1.2)}
+.teclado{display:grid;grid-template-columns:repeat(3,80px);gap:12px;justify-content:center}
+.teclado button{
+  height:64px;font-size:26px;border-radius:20px;background:rgba(255,255,255,.92);color:var(--texto);
+  box-shadow:0 4px 0 rgba(0,0,0,.15);transition:.1s;
+}
+.teclado button:active{transform:scale(.9);background:var(--amarelo)}
+.treme{animation:treme .4s}
+@keyframes treme{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+#msgPin{min-height:26px;font-weight:700;margin-top:14px}
+
+/* ---------- WIZARD NOVO PRODUTO ---------- */
+.progresso{background:#EDE9FE;border-radius:99px;height:16px;overflow:hidden;margin-bottom:6px}
+.progresso div{height:100%;background:linear-gradient(90deg,var(--verde-agua),var(--lilas));border-radius:99px;transition:width .4s ease;width:20%}
+.passo{display:none;animation:aparecer .3s ease}
+.passo.visivel{display:block}
+.emoji-picker{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
+.emoji-picker button{font-size:26px;background:#fff;border:3px solid #EDE9FE;border-radius:14px;height:52px}
+.emoji-picker button.sel{border-color:var(--lilas);background:#EDE9FE;transform:scale(1.1)}
+.cor-picker{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
+.cor-picker button{height:52px;border-radius:14px;border:3px solid transparent}
+.cor-picker button.sel{border-color:var(--texto);transform:scale(1.1)}
+.calc-lucro{background:var(--fundo);border-radius:16px;padding:14px;margin-top:12px;text-align:center}
+.calc-lucro .grande{font-size:24px;font-weight:800}
+.wizard-nav{display:flex;gap:10px;margin-top:16px}
+.wizard-nav button{flex:1;padding:12px;font-size:17px}
+
+/* ---------- REGISTRAR VENDA ---------- */
+.venda-item{display:flex;align-items:center;gap:10px;background:#fff;border-radius:16px;padding:10px;margin-bottom:10px;box-shadow:var(--sombra)}
+.venda-item .qtd-ctl{display:flex;align-items:center;gap:8px;margin-left:auto}
+.qtd-ctl button{width:44px;height:44px;border-radius:50%;font-size:22px;background:var(--lilas);color:#fff}
+.qtd-ctl .qtd{min-width:30px;text-align:center;font-weight:800;font-size:18px}
+.venda-total{background:linear-gradient(135deg,var(--verde-agua),var(--lilas));color:#fff;border-radius:var(--raio);padding:16px;text-align:center;margin:12px 0}
+.venda-total .grande{font-size:26px;font-weight:800}
+.hist-venda{background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:8px;box-shadow:var(--sombra);display:flex;align-items:center;gap:10px}
+.hist-venda small{color:var(--texto-suave)}
+.hist-venda button{background:#FEE2E2;color:#9F1239;padding:6px 12px;font-size:13px;margin-left:auto}
+
+/* ---------- LOG ---------- */
+.log-item{background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:8px;box-shadow:var(--sombra)}
+.log-item .log-data{font-size:12px;color:var(--texto-suave);font-weight:600}
+
+/* ---------- MODAL ---------- */
+.modal-fundo{position:fixed;inset:0;background:rgba(59,46,90,.55);z-index:60;display:none;align-items:flex-end;justify-content:center}
+.modal-fundo.aberto{display:flex}
+.modal{background:#fff;border-radius:26px 26px 0 0;padding:20px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;animation:sobe .3s ease}
+@keyframes sobe{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+.modal h3{margin-bottom:8px}
+.modal .modal-botoes{display:flex;gap:10px;margin-top:16px}
+.modal .modal-botoes button{flex:1;padding:12px}
+
+/* ---------- MASCOTE LUANA ---------- */
+#luna{position:fixed;left:12px;bottom:14px;z-index:55;max-width:300px;display:none}
+#luna .balao{
+  background:#fff;border:3px solid var(--lilas);border-radius:18px;
+  padding:12px 34px 12px 14px;font-size:14px;font-weight:600;box-shadow:var(--sombra);
+  position:relative;animation:pula .5s ease;
+}
+@keyframes pula{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1)}}
+#luna .fechar{position:absolute;top:4px;right:4px;background:none;font-size:16px;min-height:32px;min-width:32px;color:var(--texto-suave)}
+#luna .rosto{font-size:34px;display:block;text-align:center;margin-bottom:2px}
+
+/* ---------- TOAST ---------- */
+#toast{
+  position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(80px);
+  background:var(--texto);color:#fff;padding:12px 18px;border-radius:99px;
+  font-weight:700;z-index:120;transition:.35s;max-width:90vw;text-align:center;opacity:0;
+}
+#toast.mostra{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ---------- CONFETE ---------- */
+.confete{position:fixed;top:-12px;width:10px;height:16px;z-index:200;border-radius:3px;pointer-events:none;animation:caiConfete linear forwards}
+@keyframes caiConfete{to{transform:translateY(110vh) rotate(720deg);opacity:.7}}
+
+/* ---------- TELAS MAIORES ---------- */
+@media(min-width:640px){
+  .resumo-grid{grid-template-columns:repeat(5,1fr)}
+  .aba{max-width:560px;margin:0 auto}
+  .abas{justify-content:center}
+  #luna{left:auto;right:20px;bottom:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     🔐 TELA DO PIN — a "porta secreta" do painel
+     ============================================================ -->
+<div id="telaPin">
+  <h1>🔐 Painel das Sócias</h1>
+  <p>Digitem o PIN de 4 números pra entrar!</p>
+  <div class="bolinhas" id="bolinhas">
+    <div class="bolinha"></div><div class="bolinha"></div>
+    <div class="bolinha"></div><div class="bolinha"></div>
+  </div>
+  <div class="teclado" id="teclado"></div>
+  <div id="msgPin"></div>
+</div>
+
+<!-- ============================================================
+     🏠 CONTEÚDO PRINCIPAL (só aparece depois do PIN)
+     ============================================================ -->
+<div id="app" style="display:none">
+  <header class="topo">
+    <h1>💜 <span id="nomeLojaTopo">Girls Shop</span> — Painel</h1>
+    <p>Oi, sócias! Bora cuidar da loja? 💪</p>
+    <span class="aviso-pin" id="avisoPin" style="display:none">🔐 Troquem o PIN! Ainda está "1234" (todo mundo sabe!)</span>
+  </header>
+
+  <!-- Abas -->
+  <nav class="abas" id="abas">
+    <button data-aba="produtos" class="ativa">📦 Produtos</button>
+    <button data-aba="novo">➕ Novo Produto</button>
+    <button data-aba="venda">💰 Registrar Venda</button>
+    <button data-aba="log">📜 Log</button>
+    <button data-aba="config">⚙️ Configurações</button>
+  </nav>
+
+  <!-- 📦 ABA PRODUTOS -->
+  <section class="aba visivel" id="aba-produtos">
+    <div class="resumo-grid" id="resumo"></div>
+    <h2 style="margin:14px 0 10px">Seus produtos 🧸</h2>
+    <div id="listaProdutos"></div>
+  </section>
+
+  <!-- ➕ ABA NOVO PRODUTO (wizard de 5 passos) -->
+  <section class="aba" id="aba-novo">
+    <div class="cartao">
+      <h2>➕ Novo Produto</h2>
+      <p style="color:var(--texto-suave);font-weight:600">Passo <span id="numPasso">1</span> de 5 — <span id="nomePasso">Nome e emoji</span></p>
+      <div class="progresso"><div id="barraProgresso"></div></div>
+
+      <!-- Passo 1: nome + emoji -->
+      <div class="passo visivel" data-passo="1">
+        <label>Qual o nome do produto?</label>
+        <input type="text" id="wizNome" placeholder="Ex: Colar de Estrela" maxlength="40">
+        <label>Escolham um emoji fofo:</label>
+        <div class="emoji-picker" id="wizEmojis"></div>
+      </div>
+
+      <!-- Passo 2: categoria + cor + foto + descrição -->
+      <div class="passo" data-passo="2">
+        <label>Categoria</label>
+        <input type="text" id="wizCategoria" list="listaCategorias" placeholder="Ex: Acessórios" maxlength="25">
+        <datalist id="listaCategorias"></datalist>
+        <label>Cor do card na vitrine:</label>
+        <div class="cor-picker" id="wizCores"></div>
+        <label>📸 Link da foto (opcional — vazio = usa o emoji)</label>
+        <input type="url" id="wizFoto" placeholder="https://... (endereço completinho da imagem)">
+        <input type="file" id="wizFotoArquivo" accept="image/*" style="display:none">
+        <button type="button" class="btn-cinza" id="wizBtnFoto" style="width:100%">📷 Tirar ou escolher foto do aparelho ✨</button>
+        <div id="wizFotoPreview" style="margin-top:8px"></div>
+        <label>💬 Descrição curtinha (opcional — aparece quando tocam no produto)</label>
+        <input type="text" id="wizDescricao" placeholder="Ex: O laço mais fofo da turma!" maxlength="140">
+      </div>
+
+      <!-- Passo 3: custo + venda (com conta de lucro ao vivo!) -->
+      <div class="passo" data-passo="3">
+        <label>💸 Quanto vocês PAGARAM? (R$)</label>
+        <input type="number" id="wizCusto" placeholder="Ex: 10,50" min="0" step="0.01" inputmode="decimal">
+        <label>🏷️ Por quanto vão VENDER? (R$)</label>
+        <input type="number" id="wizVenda" placeholder="Ex: 25,00" min="0" step="0.01" inputmode="decimal">
+        <div class="calc-lucro" id="wizCalcLucro">
+          <div>Preencham os preços pra ver a mágica ✨</div>
+        </div>
+      </div>
+
+      <!-- Passo 4: estoque + desconto -->
+      <div class="passo" data-passo="4">
+        <label>📦 Quantas unidades vocês têm?</label>
+        <input type="number" id="wizEstoque" placeholder="Ex: 5" min="1" max="999" step="1" inputmode="numeric">
+        <label>🔥 Desconto? (0 = sem desconto, máx 90%)</label>
+        <input type="number" id="wizDesconto" placeholder="Ex: 10" min="0" max="90" step="1" inputmode="numeric">
+      </div>
+
+      <!-- Passo 5: resumo -->
+      <div class="passo" data-passo="5">
+        <div id="wizResumo"></div>
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn-cinza" id="wizVoltar">← Voltar</button>
+        <button class="btn-lilas" id="wizAvancar">Avançar →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 💰 ABA REGISTRAR VENDA -->
+  <section class="aba" id="aba-venda">
+    <div class="cartao">
+      <h2>💰 Registrar Venda</h2>
+      <p style="color:var(--texto-suave);font-weight:600">Cliente confirmou no WhatsApp? Toquem nos produtos vendidos! 👇</p>
+    </div>
+    <div id="vendaProdutos"></div>
+    <div class="cartao">
+      <label>🎁 Desconto extra nessa venda? (%, opcional)</label>
+      <input type="number" id="vendaDescExtra" placeholder="0" min="0" max="90" step="1" inputmode="numeric">
+    </div>
+    <div class="venda-total" id="vendaTotal">
+      <div>Total da venda</div>
+      <div class="grande">R$ 0,00</div>
+      <div style="font-size:14px">Lucro estimado: R$ 0,00</div>
+    </div>
+    <button class="btn-lilas" style="width:100%;padding:14px;font-size:18px" id="btnConfirmarVenda">✅ Confirmar venda!</button>
+    <h2 style="margin:18px 0 10px">Últimas vendas 🧾</h2>
+    <div id="ultimasVendas"></div>
+  </section>
+
+  <!-- 📜 ABA LOG -->
+  <section class="aba" id="aba-log">
+    <div class="cartao">
+      <h2>📜 Diário da Loja</h2>
+      <p style="color:var(--texto-suave);font-weight:600">Tudo que aconteceu, guardadinho aqui (últimos 50).</p>
+    </div>
+    <div id="listaLog"></div>
+  </section>
+
+  <!-- ⚙️ ABA CONFIGURAÇÕES -->
+  <section class="aba" id="aba-config">
+    <div class="cartao">
+      <h2>⚙️ Configurações</h2>
+      <label>🏪 Nome da loja</label>
+      <input type="text" id="cfgNome" maxlength="30">
+      <label>📲 WhatsApp (com DDD, só números — ex: 5511999999999)</label>
+      <input type="tel" id="cfgWhats" maxlength="15" inputmode="numeric">
+      <label>👥 Link do grupo da loja (opcional — o botãozinho 💬 da vitrine vira um portal pra ele!)</label>
+      <input type="url" id="cfgGrupo" placeholder="https://chat.whatsapp.com/...">
+      <label>🔗 Link da Nuvem (opcional — conecta a loja à Planilha Viva!)</label>
+      <input type="url" id="cfgNuvem" placeholder="https://script.google.com/macros/.../exec">
+      <p id="statusNuvem" style="font-size:14px;color:var(--texto-suave);margin-top:4px"></p>
+      <label>🎯 Meta de lucro do mês (R$)</label>
+      <input type="number" id="cfgMeta" min="0" step="0.01" inputmode="decimal">
+      <label>🎂 Aniversário da sócia 1 (DD/MM)</label>
+      <input type="text" id="cfgNiver1" placeholder="Ex: 15/03" maxlength="5" inputmode="numeric">
+      <label>🎂 Aniversário da sócia 2 (DD/MM)</label>
+      <input type="text" id="cfgNiver2" placeholder="Ex: 22/07" maxlength="5" inputmode="numeric">
+      <button class="btn-lilas" style="width:100%;margin-top:14px;padding:12px" id="btnSalvarCfg">💾 Salvar configurações</button>
+    </div>
+    <div class="cartao">
+      <h2>🔐 Trocar o PIN</h2>
+      <label>PIN atual</label>
+      <input type="password" id="pinAtual" maxlength="4" inputmode="numeric" placeholder="••••">
+      <label>Novo PIN (4 números)</label>
+      <input type="password" id="pinNovo1" maxlength="4" inputmode="numeric" placeholder="••••">
+      <label>Novo PIN de novo (pra confirmar)</label>
+      <input type="password" id="pinNovo2" maxlength="4" inputmode="numeric" placeholder="••••">
+      <button class="btn-lilas" style="width:100%;margin-top:14px;padding:12px" id="btnTrocarPin">🔑 Trocar PIN</button>
+    </div>
+    <div class="cartao" style="text-align:center">
+      <button class="btn-cinza" style="width:100%" id="btnSair">🚪 Sair do painel</button>
+    </div>
+  </section>
+</div>
+
+<!-- Mascote Luna -->
+<div id="luna">
+  <div class="balao">
+    <button class="fechar" onclick="fecharLuna()">✖</button>
+    <span class="rosto">👧🏽</span>
+    <span id="lunaTexto"></span>
+  </div>
+</div>
+
+<!-- Modal genérico -->
+<div class="modal-fundo" id="modalFundo">
+  <div class="modal" id="modalConteudo"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   🧰 FUNÇÕES AJUDANTES — iguais nas 3 páginas!
+   (lerProdutos, salvarProdutos, formatarPreco, gravarLog)
+   ============================================================ */
+
+// Lê a lista de produtos do "caderninho" (localStorage)
+function lerProdutos(){
+  try{
+    return JSON.parse(localStorage.getItem('girlsShop_produtos')) || [];
+  }catch(e){
+    avisoGentil('Ops! Não conseguimos ler os produtos 😅');
+    return [];
+  }
+}
+
+// Salva a lista de produtos no caderninho
+function salvarProdutos(lista){
+  try{
+    localStorage.setItem('girlsShop_produtos', JSON.stringify(lista));
+  }catch(e){
+    avisoGentil('Ops! O caderninho está cheio. Apaguem coisas antigas! 📒');
+  }
+}
+
+// Transforma centavos em dinheiro bonito: 1050 vira "R$ 10,50"
+function formatarPreco(centavos){
+  return 'R$ ' + (centavos/100).toFixed(2).replace('.', ',');
+}
+
+// Anota uma coisa que aconteceu no diário da loja (máx 50)
+function gravarLog(acao, detalhe, motivo){
+  try{
+    let log = JSON.parse(localStorage.getItem('girlsShop_log')) || [];
+    log.unshift({ data: new Date().toISOString(), acao: acao, detalhe: detalhe, motivo: motivo || null });
+    if(log.length > 50) log = log.slice(0, 50); // guarda só os 50 mais novos
+    localStorage.setItem('girlsShop_log', JSON.stringify(log));
+  }catch(e){ /* se não der pra salvar, tudo bem, não quebra nada */ }
+}
+
+// Lê as configurações da loja (nome, PIN, meta...)
+function lerConfig(){
+  try{
+    return JSON.parse(localStorage.getItem('girlsShop_config')) || {};
+  }catch(e){ return {}; }
+}
+
+// Salva as configurações
+function salvarConfig(cfg){
+  try{
+    localStorage.setItem('girlsShop_config', JSON.stringify(cfg));
+  }catch(e){
+    avisoGentil('Ops! Não conseguimos salvar as configurações 😅');
+  }
+}
+
+// Lê as vendas registradas
+function lerVendas(){
+  try{
+    return JSON.parse(localStorage.getItem('girlsShop_vendas')) || [];
+  }catch(e){ return []; }
+}
+
+// Salva as vendas
+function salvarVendas(v){
+  try{
+    localStorage.setItem('girlsShop_vendas', JSON.stringify(v));
+  }catch(e){
+    avisoGentil('Ops! Não conseguimos salvar a venda 😅');
+  }
+}
+
+/* ============================================================
+   🍞 TOAST — mensagenzinha que aparece e some
+   ============================================================ */
+let toastTimer = null;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('mostra');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('mostra'), 2800);
+}
+function avisoGentil(msg){ toast(msg); }
+
+/* ============================================================
+   🎉 CONFETE — festa na tela, feito só com CSS e JS!
+   ============================================================ */
+function soltarConfete(qtd){
+  const cores = ['#8B5CF6','#FBBF24','#2DD4BF','#FB7185','#FFFFFF'];
+  for(let i=0; i<(qtd||60); i++){
+    const c = document.createElement('div');
+    c.className = 'confete';
+    c.style.left = Math.random()*100 + 'vw';
+    c.style.background = cores[Math.floor(Math.random()*cores.length)];
+    c.style.animationDuration = (1.6 + Math.random()*1.8) + 's';
+    c.style.transform = 'rotate(' + Math.random()*360 + 'deg)';
+    c.style.width = (6 + Math.random()*8) + 'px';
+    document.body.appendChild(c);
+    setTimeout(()=> c.remove(), 3600); // limpa depois que cai
+  }
+}
+
+/* ============================================================
+   👧🏽 LUANA, A CONSULTORA — dicas fofas e rápidas
+   ============================================================ */
+let lunaTimer = null;
+function lunaDiz(msg){
+  const caixa = document.getElementById('luna');
+  document.getElementById('lunaTexto').textContent = msg;
+  caixa.style.display = 'block';
+  clearTimeout(lunaTimer);
+  lunaTimer = setTimeout(fecharLuna, 8000); // some depois de 8 segundos
+}
+function fecharLuna(){
+  document.getElementById('luna').style.display = 'none';
+  clearTimeout(lunaTimer);
+}
+
+/* ============================================================
+   🌱 SEED — na 1ª vez, cria produtos e vendas de exemplo
+   ============================================================ */
+const GRADIENTES = [
+  'linear-gradient(135deg,#C4B5FD,#8B5CF6)',
+  'linear-gradient(135deg,#FDE68A,#FBBF24)',
+  'linear-gradient(135deg,#99F6E4,#2DD4BF)',
+  'linear-gradient(135deg,#FDA4AF,#FB7185)',
+  'linear-gradient(135deg,#FBCFE8,#EC4899)',
+  'linear-gradient(135deg,#BAE6FD,#38BDF8)',
+  'linear-gradient(135deg,#D9F99D,#84CC16)',
+  'linear-gradient(135deg,#FED7AA,#FB923C)',
+  'linear-gradient(135deg,#DDD6FE,#A78BFA)',
+  'linear-gradient(135deg,#FECACA,#F87171)'
+];
+
+function carregarSeed(){
+  const cfg = lerConfig();
+  if(cfg.seedCarregado) return; // já carregou antes, não faz de novo
+
+  const agora = Date.now();
+  const produtosSeed = [
+    { id: agora+1,  nome:'Colar de Estrela',    emoji:'⭐', categoria:'Acessórios',  custo:800,  precoVenda:2000, desconto:0,  estoque:6,  cor:GRADIENTES[0], status:'disponivel', vendas:3, descricao:'Um colar que brilha como estrela cadente! Pra quem nasceu pra brilhar ✨' },
+    { id: agora+2,  nome:'Scrunchie de Cetim',  emoji:'🎀', categoria:'Cabelo',      custo:400,  precoVenda:1000, desconto:0,  estoque:8,  cor:GRADIENTES[4], status:'disponivel', vendas:5, descricao:'Prende o cabelo sem marcar e ainda fica lindo no pulso! Dois em um 🎀' },
+    { id: agora+3,  nome:'Anel Ajustável Flor', emoji:'🌸', categoria:'Acessórios',  custo:500,  precoVenda:1200, desconto:10, estoque:3,  cor:GRADIENTES[3], status:'disponivel', vendas:2, descricao:'Uma florzinha que cabe em qualquer dedo, porque ajusta direitinho!' },
+    { id: agora+4,  nome:'Kit Adesivos Fofos',  emoji:'✨', categoria:'Papelaria',   custo:600,  precoVenda:1500, desconto:0,  estoque:10, cor:GRADIENTES[1], status:'disponivel', vendas:4, descricao:'Um pacotinho cheio de adesivos lindos pra colar onde a imaginação mandar!' },
+    { id: agora+5,  nome:'Gloss Morango',       emoji:'🍓', categoria:'Beleza',      custo:900,  precoVenda:2200, desconto:0,  estoque:0,  cor:GRADIENTES[9], status:'esgotado',   vendas:6, descricao:'Brilho com cheirinho de morango! Lábios macios e sorriso lindo 🍓' },
+    { id: agora+6,  nome:'Pulseira da Amizade', emoji:'🧡', categoria:'Acessórios',  custo:300,  precoVenda:800,  desconto:0,  estoque:12, cor:GRADIENTES[7], status:'disponivel', vendas:7, descricao:'A clássica pulseira que fortalece amizades! Leve duas e presenteie 💛' },
+    { id: agora+7,  nome:'Caneta Glitter',      emoji:'🖊️', categoria:'Papelaria',   custo:250,  precoVenda:700,  desconto:0,  estoque:9,  cor:GRADIENTES[5], status:'disponivel', vendas:3, descricao:'Escreve com brilho de verdade! O caderno vira festa ✨' },
+    { id: agora+8,  nome:'Presilha Borboleta',  emoji:'🦋', categoria:'Cabelo',      custo:350,  precoVenda:900,  desconto:0,  estoque:7,  cor:GRADIENTES[8], status:'disponivel', vendas:2, descricao:'Uma borboleta que pousou no seu cabelo! Firme e fofinha 🦋' },
+    { id: agora+9,  nome:'Brinco Argola Mini',  emoji:'💫', categoria:'Acessórios',  custo:700,  precoVenda:1800, desconto:15, estoque:2,  cor:GRADIENTES[2], status:'disponivel', vendas:1, descricao:'Argolinhas delicadas que combinam com tudo. Leves e lindas!' },
+    { id: agora+10, nome:'Necessaire Transparente', emoji:'👝', categoria:'Bolsas',  custo:1500, precoVenda:3500, desconto:0,  estoque:4,  cor:GRADIENTES[6], status:'disponivel', vendas:2, descricao:'Dá pra ver tudo que tem dentro! Acabou o mistério da necessaire sumidora 😄' },
+    { id: agora+11, nome:'Tiara de Pérolas',    emoji:'👑', categoria:'Cabelo',      custo:1000, precoVenda:2500, desconto:0,  estoque:5,  cor:GRADIENTES[1], status:'pausado',    vendas:1, descricao:'Dia de princesa? Essa tiara de pérolas transforma qualquer look 👑' },
+    { id: agora+12, nome:'Chaveiro Pelúcia Mini', emoji:'🧸', categoria:'Acessórios', custo:550, precoVenda:1400, desconto:0,  estoque:6,  cor:GRADIENTES[7], status:'disponivel', vendas:4, descricao:'Um ursinho mini que vai com você pra todo lugar, pendurado na mochila!' }
+  ];
+  salvarProdutos(produtosSeed);
+
+  // Vendas de exemplo espalhadas pelo mês (pro Dashboard abrir "vivo")
+  const hoje = new Date();
+  function diasAtras(n, hora){
+    const d = new Date(hoje);
+    d.setDate(d.getDate()-n);
+    d.setHours(hora, 30, 0, 0);
+    return d.toISOString();
+  }
+  const vendasSeed = [
+    { id: agora+101, data: diasAtras(1,16), itens:[{produtoId:agora+6, nome:'Pulseira da Amizade', emoji:'🧡', qtd:2, precoUnit:800, custoUnit:300, desconto:0}], total:1600, lucro:1000 },
+    { id: agora+102, data: diasAtras(3,14), itens:[{produtoId:agora+4, nome:'Kit Adesivos Fofos', emoji:'✨', qtd:1, precoUnit:1500, custoUnit:600, desconto:0},{produtoId:agora+7, nome:'Caneta Glitter', emoji:'🖊️', qtd:1, precoUnit:700, custoUnit:250, desconto:0}], total:2200, lucro:1350 },
+    { id: agora+103, data: diasAtras(6,18), itens:[{produtoId:agora+1, nome:'Colar de Estrela', emoji:'⭐', qtd:1, precoUnit:2000, custoUnit:800, desconto:0}], total:2000, lucro:1200 },
+    { id: agora+104, data: diasAtras(9,15), itens:[{produtoId:agora+12, nome:'Chaveiro Pelúcia Mini', emoji:'🧸', qtd:2, precoUnit:1400, custoUnit:550, desconto:0}], total:2800, lucro:1700 },
+    { id: agora+105, data: diasAtras(12,17), itens:[{produtoId:agora+2, nome:'Scrunchie de Cetim', emoji:'🎀', qtd:1, precoUnit:1000, custoUnit:400, desconto:0}], total:1000, lucro:600 }
+  ];
+  salvarVendas(vendasSeed);
+
+  cfg.seedCarregado = true;
+  if(!cfg.pin) cfg.pin = '1234';
+  salvarConfig(cfg);
+  gravarLog('🌱 Começou tudo!', 'A loja ganhou os primeiros produtos de exemplo.');
+}
+
+/* ============================================================
+   🔐 TELA DO PIN — teclado visual, 3 tentativas, pausa de 30s
+   ============================================================ */
+let pinDigitado = '';
+let tentativas = 0;
+let pinTravado = false;
+
+// Monta o teclado de números (1-9, apagar, 0)
+function montarTeclado(){
+  const tk = document.getElementById('teclado');
+  tk.innerHTML = '';
+  const teclas = ['1','2','3','4','5','6','7','8','9','⌫','0','✔'];
+  teclas.forEach(t=>{
+    const b = document.createElement('button');
+    b.textContent = t;
+    b.onclick = ()=> teclaPin(t);
+    tk.appendChild(b);
+  });
+}
+
+// Atualiza as bolinhas que mostram quantos números já foram digitados
+function atualizarBolinhas(){
+  document.querySelectorAll('.bolinha').forEach((b,i)=>{
+    b.classList.toggle('cheia', i < pinDigitado.length);
+  });
+}
+
+function teclaPin(t){
+  if(pinTravado) return; // durante a pausa, o teclado não funciona
+  if(t === '⌫'){
+    pinDigitado = pinDigitado.slice(0,-1);
+  }else if(t === '✔'){
+    if(pinDigitado.length === 4) verificarPin();
+    return;
+  }else{
+    if(pinDigitado.length >= 4) return;
+    pinDigitado += t;
+  }
+  atualizarBolinhas();
+  if(pinDigitado.length === 4) setTimeout(verificarPin, 250); // confere sozinho
+}
+
+function verificarPin(){
+  const cfg = lerConfig();
+  const pinCerto = cfg.pin || '1234';
+  if(pinDigitado === pinCerto){
+    // Acertou! Guarda na sessão pra não pedir de novo
+    sessionStorage.setItem('girlsShop_sessao','ok');
+    entrarNoPainel();
+  }else{
+    tentativas++;
+    const tela = document.getElementById('telaPin');
+    tela.classList.add('treme'); // treme tudo no erro!
+    setTimeout(()=> tela.classList.remove('treme'), 450);
+    pinDigitado = '';
+    atualizarBolinhas();
+    if(tentativas >= 3){
+      // 3 erros = pausa de 30 segundos
+      pinTravado = true;
+      tentativas = 0;
+      let faltam = 30;
+      const msg = document.getElementById('msgPin');
+      msg.textContent = 'Ops! Muitas tentativas. Esperem ' + faltam + 's ⏳';
+      const contador = setInterval(()=>{
+        faltam--;
+        if(faltam <= 0){
+          clearInterval(contador);
+          pinTravado = false;
+          msg.textContent = 'Pronto! Podem tentar de novo 🤗';
+        }else{
+          msg.textContent = 'Ops! Muitas tentativas. Esperem ' + faltam + 's ⏳';
+        }
+      }, 1000);
+    }else{
+      document.getElementById('msgPin').textContent =
+        'PIN errado! Tentativa ' + tentativas + ' de 3 🤗';
+    }
+  }
+}
+
+// Abre o painel depois do PIN certo
+function entrarNoPainel(){
+  document.getElementById('telaPin').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  const cfg = lerConfig();
+  document.getElementById('nomeLojaTopo').textContent = cfg.nomeLoja || 'Girls Shop';
+  // Avisa se o PIN ainda é o de fábrica
+  if((cfg.pin || '1234') === '1234'){
+    document.getElementById('avisoPin').style.display = 'inline-block';
+  }
+  renderTudo();
+  lunaDiz('Oi, sócias! Eu sou a Luna, a consultora de vocês! Vou dar dicas enquanto vocês trabalham 💜');
+}
+
+/* ============================================================
+   🗂️ ABAS — trocar de uma tela pra outra
+   ============================================================ */
+document.querySelectorAll('#abas button').forEach(btn=>{
+  btn.onclick = ()=>{
+    document.querySelectorAll('#abas button').forEach(b=> b.classList.remove('ativa'));
+    btn.classList.add('ativa');
+    document.querySelectorAll('.aba').forEach(a=> a.classList.remove('visivel'));
+    document.getElementById('aba-' + btn.dataset.aba).classList.add('visivel');
+    renderTudo();
+  };
+});
+
+/* ============================================================
+   📦 ABA PRODUTOS — resumo + lista por prioridade
+   ============================================================ */
+
+// Descobre a "urgência" de cada produto (menor = mais urgente)
+function prioridade(p){
+  if(p.status === 'esgotado') return 0;
+  if(p.status === 'removido') return 4;
+  if(p.status === 'pausado') return 3;
+  if(p.estoque <= 3) return 1;       // estoque baixinho
+  return 2;                           // tudo certo
+}
+
+// Preço com desconto já aplicado (em centavos)
+function precoComDesconto(p){
+  return Math.round(p.precoVenda * (100 - (p.desconto||0)) / 100);
+}
+
+function renderProdutos(){
+  const produtos = lerProdutos();
+
+  // ---- Resumo rápido ----
+  const ativos = produtos.filter(p=> p.status==='disponivel');
+  const esgotados = produtos.filter(p=> p.status==='esgotado');
+  const pausados = produtos.filter(p=> p.status==='pausado');
+  const itensEstoque = ativos.reduce((s,p)=> s + p.estoque, 0);
+  // Lucro potencial: se vender TUDO que tem, quanto sobra?
+  const lucroPotencial = ativos.reduce((s,p)=> s + (precoComDesconto(p) - p.custo) * p.estoque, 0);
+
+  document.getElementById('resumo').innerHTML =
+    '<div class="resumo-item"><div class="num" style="color:var(--verde)">' + ativos.length + '</div><div class="rot">Ativos ✅</div></div>' +
+    '<div class="resumo-item"><div class="num" style="color:var(--coral)">' + esgotados.length + '</div><div class="rot">Esgotados 😱</div></div>' +
+    '<div class="resumo-item"><div class="num" style="color:var(--cinza)">' + pausados.length + '</div><div class="rot">Pausados ⏸️</div></div>' +
+    '<div class="resumo-item"><div class="num" style="color:var(--lilas)">' + itensEstoque + '</div><div class="rot">Itens no estoque 📦</div></div>' +
+    '<div class="resumo-item"><div class="num" style="color:var(--verde)">' + formatarPreco(lucroPotencial) + '</div><div class="rot">Lucro se vender tudo 🤩</div></div>';
+
+  // ---- Lista ordenada: esgotados → baixo → disponíveis → pausados → removidos ----
+  const ordenados = [...produtos].sort((a,b)=> prioridade(a) - prioridade(b));
+  const lista = document.getElementById('listaProdutos');
+  lista.innerHTML = '';
+
+  if(ordenados.length === 0){
+    lista.innerHTML = '<div class="cartao" style="text-align:center">Nenhum produto ainda! Toquem em "➕ Novo Produto" pra começar 🌱</div>';
+    return;
+  }
+
+  ordenados.forEach(p=>{
+    const lucroUnit = precoComDesconto(p) - p.custo;
+    const margem = p.custo > 0 ? Math.round(lucroUnit / p.custo * 100) : 0;
+
+    // Escolhe a classe da borda colorida
+    let classe = 'produto';
+    if(p.status === 'esgotado') classe += ' esgotado';
+    else if(p.status === 'pausado' || p.status === 'removido') classe += ' pausado';
+    else if(p.estoque <= 3) classe += ' baixo';
+
+    // Selo de status
+    let selo = '';
+    if(p.status === 'disponivel') selo = '<span class="selo disponivel">✅ À venda</span>';
+    if(p.status === 'esgotado') selo = '<span class="selo esgotado">😱 Esgotado</span>';
+    if(p.status === 'pausado') selo = '<span class="selo pausado">⏸️ Pausado</span>';
+    if(p.status === 'removido') selo = '<span class="selo removido">🗑️ Removido</span>';
+    if(p.desconto > 0 && p.status === 'disponivel') selo += ' <span class="selo oferta">🔥 -' + p.desconto + '%</span>';
+
+    const card = document.createElement('div');
+    card.className = classe;
+    card.innerHTML =
+      '<div class="prod-topo">' +
+        '<div class="prod-emoji" style="background:' + p.cor + ';overflow:hidden">' +
+          (p.foto ? '<img src="' + p.foto + '" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML=\'' + p.emoji + '\'">' : p.emoji) +
+        '</div>' +
+        '<div>' +
+          '<div class="prod-nome">' + p.nome + '</div>' +
+          '<div class="prod-sub">' + p.categoria + ' • ' + p.estoque + ' un • ' + (p.vendas||0) + ' vendidos</div>' +
+          selo +
+        '</div>' +
+      '</div>' +
+      '<div class="prod-valores">' +
+        '<div class="v"><b>' + formatarPreco(p.custo) + '</b><span>Custo 💸</span></div>' +
+        '<div class="v"><b>' + formatarPreco(precoComDesconto(p)) + '</b><span>Venda 🏷️</span></div>' +
+        '<div class="v"><b style="color:' + (lucroUnit >= 0 ? 'var(--verde)' : 'var(--coral)') + '">' + formatarPreco(lucroUnit) + '</b><span>Lucro (' + margem + '%) 💰</span></div>' +
+      '</div>' +
+      '<div class="prod-botoes"></div>';
+
+    const botoes = card.querySelector('.prod-botoes');
+
+    // Botão de editar (só pra produtos "vivos")
+    if(p.status !== 'removido'){
+      const bEdit = document.createElement('button');
+      bEdit.className = 'btn-cinza';
+      bEdit.textContent = '✏️ Editar';
+      bEdit.onclick = ()=> abrirModalEditar(p.id);
+      botoes.appendChild(bEdit);
+    }
+
+    // ⭐ TROCA RÁPIDA: botão pulsante quando o produto esgotou!
+    if(p.status === 'esgotado'){
+      const bTroca = document.createElement('button');
+      bTroca.className = 'btn-troca';
+      bTroca.textContent = '🔄 Troca Rápida!';
+      bTroca.onclick = ()=> abrirTrocaRapida(p.id);
+      botoes.appendChild(bTroca);
+    }
+
+    // Pausar / Reativar
+    if(p.status === 'disponivel'){
+      const bPausa = document.createElement('button');
+      bPausa.className = 'btn-cinza';
+      bPausa.textContent = '⏸️ Pausar';
+      bPausa.onclick = ()=> abrirPausar(p.id);
+      botoes.appendChild(bPausa);
+    }
+    if(p.status === 'pausado'){
+      const bReativar = document.createElement('button');
+      bReativar.className = 'btn-lilas';
+      bReativar.textContent = '▶️ Reativar';
+      bReativar.onclick = ()=> reativarProduto(p.id);
+      botoes.appendChild(bReativar);
+    }
+
+    lista.appendChild(card);
+  });
+}
+
+/* ============================================================
+   🪟 MODAIS — caixinhas que abrem por cima da tela
+   ============================================================ */
+function abrirModal(html){
+  document.getElementById('modalConteudo').innerHTML = html;
+  document.getElementById('modalFundo').classList.add('aberto');
+}
+function fecharModal(){
+  document.getElementById('modalFundo').classList.remove('aberto');
+}
+// Clicar fora do modal fecha ele
+document.getElementById('modalFundo').addEventListener('click', function(e){
+  if(e.target === this) fecharModal();
+});
+
+// Lê um valor em R$ digitado e transforma em centavos
+function paraCentavos(valor){
+  const n = parseFloat(String(valor).replace(',', '.'));
+  if(isNaN(n)) return null;
+  return Math.round(n * 100);
+}
+
+/* ---------- ✏️ Modal EDITAR preço/estoque ---------- */
+function abrirModalEditar(id){
+  const produtos = lerProdutos();
+  const p = produtos.find(x=> x.id === id);
+  if(!p) return;
+  abrirModal(
+    '<h3>✏️ Editar "' + p.nome + '"</h3>' +
+    '<label>🏷️ Preço de venda (R$)</label>' +
+    '<input type="number" id="edVenda" step="0.01" min="0" inputmode="decimal" value="' + (p.precoVenda/100).toFixed(2) + '">' +
+    '<label>📦 Quantidade que vocês têm</label>' +
+    '<input type="number" id="edEstoque" min="0" max="999" step="1" inputmode="numeric" value="' + p.estoque + '">' +
+    '<label>🔥 Desconto (%, 0 = sem)</label>' +
+    '<input type="number" id="edDesc" min="0" max="90" step="1" inputmode="numeric" value="' + (p.desconto||0) + '">' +
+    '<label>📸 Link da foto (opcional — vazio = usa o emoji)</label>' +
+    '<input type="url" id="edFoto" value="' + (p.foto||'').replace(/"/g,'&quot;') + '" placeholder="https://...">' +
+    '<input type="file" id="edFotoArquivo" accept="image/*" style="display:none">' +
+    '<button type="button" class="btn-cinza" id="edBtnFoto" style="width:100%">📷 Tirar ou escolher foto ✨</button>' +
+    '<div id="edFotoPreview" style="margin-top:8px"></div>' +
+    '<label>💬 Descrição (opcional)</label>' +
+    '<input type="text" id="edDescricao" maxlength="140" value="' + (p.descricao||'').replace(/"/g,'&quot;') + '">' +
+    '<div class="modal-botoes">' +
+      '<button class="btn-cinza" onclick="fecharModal()">Cancelar</button>' +
+      '<button class="btn-lilas" id="edSalvar">💾 Salvar</button>' +
+    '</div>'
+  );
+  // Liga a Foto Mágica do modal de edição 📷
+  ligarFotoMagica('edBtnFoto', 'edFotoArquivo', 'edFoto', 'edFotoPreview');
+  document.getElementById('edSalvar').onclick = ()=>{
+    const venda = paraCentavos(document.getElementById('edVenda').value);
+    const estoque = parseInt(document.getElementById('edEstoque').value);
+    const desc = parseInt(document.getElementById('edDesc').value) || 0;
+    const foto = document.getElementById('edFoto').value.trim();
+    const descricao = document.getElementById('edDescricao').value.trim();
+    if(venda === null || venda < 0){ toast('Ops! Preço estranho. Tentem de novo 🤗'); return; }
+    if(venda < p.custo){ toast('😱 Vender por menos do que custou dá prejuízo!'); return; }
+    if(isNaN(estoque) || estoque < 0){ toast('Ops! Quantidade estranha 🤗'); return; }
+    if(desc < 0 || desc > 90){ toast('Desconto só vale de 0 a 90%! 😅'); return; }
+    if(foto && foto.indexOf('data:image/') !== 0 && !/^https?:\/\/.+\..+/.test(foto)){ toast('Esse link da foto parece estranho 🤔 Use o botão 📷 ou um link começando com https://'); return; }
+    p.precoVenda = venda;
+    p.estoque = estoque;
+    p.desconto = desc;
+    p.foto = foto;
+    p.descricao = descricao;
+    // Se colocaram estoque num esgotado, ele volta pra vitrine!
+    if(p.status === 'esgotado' && estoque > 0) p.status = 'disponivel';
+    if(estoque === 0 && p.status === 'disponivel') p.status = 'esgotado';
+    salvarProdutos(produtos);
+    gravarLog('✏️ Editou produto', p.nome + ': venda ' + formatarPreco(venda) + ', ' + estoque + ' un');
+    fecharModal();
+    renderTudo();
+    toast('Salvou! ✨');
+  };
+}
+
+/* ---------- ⏸️ Modal PAUSAR ---------- */
+const MOTIVOS = ['Esgotou', 'Não quero mais vender', 'Troquei por outro melhor'];
+function abrirPausar(id){
+  abrirModal(
+    '<h3>⏸️ Pausar produto?</h3>' +
+    '<p style="color:var(--texto-suave);font-weight:600">Ele sai da vitrine, mas continua guardado aqui. Podem reativar quando quiserem!</p>' +
+    '<label>Por quê?</label>' +
+    '<select id="motivoPausa">' + MOTIVOS.map(m=>'<option>'+m+'</option>').join('') + '</select>' +
+    '<div class="modal-botoes">' +
+      '<button class="btn-cinza" onclick="fecharModal()">Cancelar</button>' +
+      '<button class="btn-lilas" id="okPausa">⏸️ Pausar</button>' +
+    '</div>'
+  );
+  document.getElementById('okPausa').onclick = ()=>{
+    const motivo = document.getElementById('motivoPausa').value;
+    const produtos = lerProdutos();
+    const p = produtos.find(x=> x.id === id);
+    if(!p) return;
+    p.status = 'pausado';
+    salvarProdutos(produtos);
+    gravarLog('⏸️ Pausou produto', p.nome, motivo);
+    fecharModal();
+    renderTudo();
+    toast('Pausado! Ele descansa um pouquinho 😴');
+  };
+}
+
+/* ---------- ▶️ Reativar ---------- */
+function reativarProduto(id){
+  const produtos = lerProdutos();
+  const p = produtos.find(x=> x.id === id);
+  if(!p) return;
+  p.status = p.estoque > 0 ? 'disponivel' : 'esgotado';
+  salvarProdutos(produtos);
+  gravarLog('▶️ Reativou produto', p.nome);
+  renderTudo();
+  toast('De volta à vitrine! 🎉');
+  lunaDiz('Produto de volta à vitrine! Boa venda! 💜');
+}
+
+/* ============================================================
+   ⭐ TROCA RÁPIDA — remover / substituir / pausar esgotados
+   ============================================================ */
+function abrirTrocaRapida(id){
+  const produtos = lerProdutos();
+  const p = produtos.find(x=> x.id === id);
+  if(!p) return;
+  abrirModal(
+    '<h3>🔄 Troca Rápida: ' + p.emoji + ' ' + p.nome + '</h3>' +
+    '<p style="color:var(--texto-suave);font-weight:600">Ele esgotou! O que vocês querem fazer?</p>' +
+    '<div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">' +
+      '<button class="btn-lilas" id="trSubstituir" style="padding:14px">🔄 Substituir por produto novo</button>' +
+      '<button class="btn-cinza" id="trPausar" style="padding:14px">⏸️ Pausar (volta depois)</button>' +
+      '<button class="btn-cinza" id="trRemover" style="padding:14px">🗑️ Remover da loja</button>' +
+      '<button class="btn-cinza" onclick="fecharModal()">Deixa quieto por ora</button>' +
+    '</div>'
+  );
+  lunaDiz('Produto que esgota rápido é CAMPEÃO DE VENDAS! 🏆 Anotem e comprem mais na próxima!');
+
+  document.getElementById('trPausar').onclick = ()=>{ fecharModal(); abrirPausar(id); };
+
+  document.getElementById('trRemover').onclick = ()=>{
+    abrirModal(
+      '<h3>🗑️ Remover "' + p.nome + '"?</h3>' +
+      '<p style="color:var(--texto-suave);font-weight:600">Ele sai da vitrine, mas fica no histórico das vendas.</p>' +
+      '<label>Por quê?</label>' +
+      '<select id="motivoRemover">' + MOTIVOS.map(m=>'<option>'+m+'</option>').join('') + '</select>' +
+      '<div class="modal-botoes">' +
+        '<button class="btn-cinza" onclick="fecharModal()">Cancelar</button>' +
+        '<button class="btn-lilas" id="okRemover">🗑️ Remover</button>' +
+      '</div>'
+    );
+    document.getElementById('okRemover').onclick = ()=>{
+      const motivo = document.getElementById('motivoRemover').value;
+      const lista = lerProdutos();
+      const alvo = lista.find(x=> x.id === id);
+      if(alvo){ alvo.status = 'removido'; salvarProdutos(lista); }
+      gravarLog('🗑️ Removeu produto', p.nome, motivo);
+      fecharModal();
+      renderTudo();
+      toast('Removido! Espaço livre pra novidades 🌱');
+      lunaDiz('Remover não é fracasso! É espaço para algo melhor. Empreender é aprender todo dia! 🌱');
+    };
+  };
+
+  document.getElementById('trSubstituir').onclick = ()=>{
+    // Formulário já vem com a categoria antiga — o produto novo fica no mesmo lugar!
+    abrirModal(
+      '<h3>🔄 Substituir "' + p.nome + '"</h3>' +
+      '<p style="color:var(--texto-suave);font-weight:600">O novo produto herda o lugar dele na vitrine!</p>' +
+      '<label>Nome do novo produto</label>' +
+      '<input type="text" id="subNome" maxlength="40" placeholder="Ex: Colar de Lua">' +
+      '<label>Emoji</label>' +
+      '<div class="emoji-picker" id="subEmojis"></div>' +
+      '<label>Categoria</label>' +
+      '<input type="text" id="subCategoria" maxlength="25" value="' + p.categoria + '">' +
+      '<label>📸 Link da foto (opcional)</label>' +
+      '<input type="url" id="subFoto" placeholder="https://... (vazio = usa o emoji)">' +
+      '<input type="file" id="subFotoArquivo" accept="image/*" style="display:none">' +
+      '<button type="button" class="btn-cinza" id="subBtnFoto" style="width:100%">📷 Tirar ou escolher foto ✨</button>' +
+      '<div id="subFotoPreview" style="margin-top:8px"></div>' +
+      '<label>💬 Descrição (opcional)</label>' +
+      '<input type="text" id="subDescricao" maxlength="140" placeholder="Uma frase fofa sobre o produto">' +
+      '<label>💸 Custo (R$)</label>' +
+      '<input type="number" id="subCusto" step="0.01" min="0" inputmode="decimal">' +
+      '<label>🏷️ Venda (R$)</label>' +
+      '<input type="number" id="subVenda" step="0.01" min="0" inputmode="decimal">' +
+      '<label>📦 Quantidade</label>' +
+      '<input type="number" id="subEstoque" min="1" max="999" step="1" inputmode="numeric" value="3">' +
+      '<label>Por que trocaram?</label>' +
+      '<select id="subMotivo">' + MOTIVOS.map(m=>'<option>'+m+'</option>').join('') + '</select>' +
+      '<div class="modal-botoes">' +
+        '<button class="btn-cinza" onclick="fecharModal()">Cancelar</button>' +
+        '<button class="btn-lilas" id="okSub">🔄 Substituir!</button>' +
+      '</div>'
+    );
+    // Emojis clicáveis do substituto
+    let emojiSub = p.emoji;
+    const grade = document.getElementById('subEmojis');
+    EMOJIS.slice(0,10).forEach(e=>{
+      const b = document.createElement('button');
+      b.textContent = e;
+      if(e === emojiSub) b.classList.add('sel');
+      b.onclick = ()=>{
+        emojiSub = e;
+        grade.querySelectorAll('button').forEach(x=> x.classList.remove('sel'));
+        b.classList.add('sel');
+      };
+      grade.appendChild(b);
+    });
+
+    // Liga a Foto Mágica da substituição 📷
+    ligarFotoMagica('subBtnFoto', 'subFotoArquivo', 'subFoto', 'subFotoPreview');
+
+    document.getElementById('okSub').onclick = ()=>{
+      const nome = document.getElementById('subNome').value.trim();
+      const categoria = document.getElementById('subCategoria').value.trim() || 'Outros';
+      const custo = paraCentavos(document.getElementById('subCusto').value);
+      const venda = paraCentavos(document.getElementById('subVenda').value);
+      const estoque = parseInt(document.getElementById('subEstoque').value);
+      const motivo = document.getElementById('subMotivo').value;
+      const foto = document.getElementById('subFoto').value.trim();
+      const descricao = document.getElementById('subDescricao').value.trim();
+      if(!nome){ toast('Faltou o nome! 🤗'); return; }
+      if(custo === null || venda === null){ toast('Preenchem os preços? 🤗'); return; }
+      if(venda < custo){ toast('😱 Venda menor que o custo dá prejuízo!'); return; }
+      if(isNaN(estoque) || estoque < 1){ toast('Quantidade estranha 🤗'); return; }
+      if(foto && foto.indexOf('data:image/') !== 0 && !/^https?:\/\/.+\..+/.test(foto)){ toast('Esse link da foto parece estranho 🤔 Use o botão 📷 ou um link começando com https://'); return; }
+      const lista = lerProdutos();
+      const alvo = lista.find(x=> x.id === id);
+      if(alvo){
+        // Substitui MANTENDO o mesmo id = mesmo lugar na vitrine
+        alvo.nome = nome;
+        alvo.emoji = emojiSub;
+        alvo.categoria = categoria;
+        alvo.custo = custo;
+        alvo.precoVenda = venda;
+        alvo.desconto = 0;
+        alvo.estoque = estoque;
+        alvo.status = 'disponivel';
+        alvo.foto = foto;
+        alvo.descricao = descricao;
+        // "vendas" continua guardado no histórico
+        salvarProdutos(lista);
+      }
+      gravarLog('🔄 Trocou produto', '"' + p.nome + '" virou "' + nome + '"', motivo);
+      fecharModal();
+      renderTudo();
+      soltarConfete(50);
+      toast('Substituído! Novidade na vitrine 🎉');
+    };
+  };
+}
+</script>
+
+<script>
+/* ============================================================
+   ➕ WIZARD DE NOVO PRODUTO — 5 passinhos, tipo jogo!
+   ============================================================ */
+const EMOJIS = ['⭐','🎀','🌸','✨','🍓','🧡','🦋','💫','👝','👑','🧸','💖','🌈','🍭','💎','🦄','🌻','🍒','🐻','🎁'];
+let wiz = {}; // guarda as respostas do wizard
+let passoAtual = 1;
+const NOMES_PASSOS = {1:'Nome e emoji', 2:'Categoria, cor e foto 📸', 3:'Preços 💰', 4:'Estoque e desconto', 5:'Resumo final'};
+
+// Monta o picker de emojis do wizard
+(function montarEmojisWizard(){
+  const grade = document.getElementById('wizEmojis');
+  EMOJIS.forEach(e=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = e;
+    b.onclick = ()=>{
+      wiz.emoji = e;
+      grade.querySelectorAll('button').forEach(x=> x.classList.remove('sel'));
+      b.classList.add('sel');
+    };
+    grade.appendChild(b);
+  });
+})();
+
+// Monta o picker de cores do wizard
+(function montarCoresWizard(){
+  const grade = document.getElementById('wizCores');
+  GRADIENTES.forEach((g,i)=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.style.background = g;
+    b.setAttribute('aria-label', 'Cor ' + (i+1));
+    b.onclick = ()=>{
+      wiz.cor = g;
+      grade.querySelectorAll('button').forEach(x=> x.classList.remove('sel'));
+      b.classList.add('sel');
+    };
+    grade.appendChild(b);
+  });
+})();
+
+// Liga a Foto Mágica do wizard 📷 (botão → câmera/galeria → preview)
+ligarFotoMagica('wizBtnFoto', 'wizFotoArquivo', 'wizFoto', 'wizFotoPreview');
+
+// Sugere as categorias que já existem (pra não ter "Acessorio" e "Acessório" separados)
+function atualizarCategorias(){
+  const cats = [...new Set(lerProdutos().map(p=> p.categoria))];
+  document.getElementById('listaCategorias').innerHTML =
+    cats.map(c=> '<option value="' + c + '">').join('');
+}
+
+// Conta de lucro AO VIVO no passo 3
+function atualizarCalcLucro(){
+  const custo = paraCentavos(document.getElementById('wizCusto').value);
+  const venda = paraCentavos(document.getElementById('wizVenda').value);
+  const caixa = document.getElementById('wizCalcLucro');
+  if(custo === null || venda === null){
+    caixa.innerHTML = '<div>Preencham os preços pra ver a mágica ✨</div>';
+    return;
+  }
+  const lucro = venda - custo;
+  if(lucro < 0){
+    caixa.innerHTML = '<div class="grande" style="color:var(--coral)">😱 Prejuízo!</div>' +
+      '<div>Vender por menos do que pagou faz vocês PERDEREM dinheiro!</div>';
+    return;
+  }
+  const margem = custo > 0 ? Math.round(lucro / custo * 100) : 0;
+  let recado = 'Pode melhorar! 🤔';
+  if(margem >= 100) recado = 'Excelente! 🌟';
+  else if(margem >= 50) recado = 'Muito bom! 👏';
+  caixa.innerHTML =
+    '<div class="grande" style="color:var(--verde)">Lucro: ' + formatarPreco(lucro) + '</div>' +
+    '<div style="font-weight:700">Margem: ' + margem + '% — ' + recado + '</div>';
+}
+document.getElementById('wizCusto').addEventListener('input', atualizarCalcLucro);
+document.getElementById('wizVenda').addEventListener('input', atualizarCalcLucro);
+
+// Mostra um passo do wizard e esconde os outros
+function mostrarPasso(n){
+  passoAtual = n;
+  document.querySelectorAll('.passo').forEach(p=> p.classList.remove('visivel'));
+  document.querySelector('.passo[data-passo="' + n + '"]').classList.add('visivel');
+  document.getElementById('numPasso').textContent = n;
+  document.getElementById('nomePasso').textContent = NOMES_PASSOS[n];
+  document.getElementById('barraProgresso').style.width = (n/5*100) + '%';
+  document.getElementById('wizVoltar').style.visibility = n === 1 ? 'hidden' : 'visible';
+  document.getElementById('wizAvancar').textContent = n === 5 ? '🎉 Salvar produto!' : 'Avançar →';
+  if(n === 5) montarResumoWizard();
+}
+
+// Confere se o passo atual está completinho antes de avançar
+function validarPasso(n){
+  if(n === 1){
+    wiz.nome = document.getElementById('wizNome').value.trim();
+    if(!wiz.nome){ toast('Faltou o nome do produto! 🤗'); return false; }
+    if(!wiz.emoji){ toast('Escolham um emoji fofo! 😊'); return false; }
+  }
+  if(n === 2){
+    wiz.categoria = document.getElementById('wizCategoria').value.trim();
+    if(!wiz.categoria){ toast('Qual a categoria? 🤗'); return false; }
+    if(!wiz.cor){ toast('Escolham uma cor pro card! 🎨'); return false; }
+    // Foto e descrição são opcionais — aceita link https:// ou foto do aparelho (data:image)
+    wiz.foto = document.getElementById('wizFoto').value.trim();
+    wiz.descricao = document.getElementById('wizDescricao').value.trim();
+    if(wiz.foto && wiz.foto.indexOf('data:image/') !== 0 && !/^https?:\/\/.+\..+/.test(wiz.foto)){
+      toast('Esse link da foto parece estranho 🤔 Use o botão 📷 ou um link começando com https://');
+      return false;
+    }
+  }
+  if(n === 3){
+    wiz.custo = paraCentavos(document.getElementById('wizCusto').value);
+    wiz.precoVenda = paraCentavos(document.getElementById('wizVenda').value);
+    if(wiz.custo === null || wiz.precoVenda === null){ toast('Preenchem os dois preços? 🤗'); return false; }
+    // BLOQUEIA prejuízo — venda nunca pode ser menor que custo!
+    if(wiz.precoVenda < wiz.custo){
+      toast('Vocês teriam prejuízo! 😱 A venda precisa ser maior que o custo.');
+      return false;
+    }
+  }
+  if(n === 4){
+    wiz.estoque = parseInt(document.getElementById('wizEstoque').value);
+    wiz.desconto = parseInt(document.getElementById('wizDesconto').value) || 0;
+    if(isNaN(wiz.estoque) || wiz.estoque < 1){ toast('Quantas unidades vocês têm? 🤗'); return false; }
+    if(wiz.desconto < 0 || wiz.desconto > 90){ toast('Desconto só vale de 0 a 90%! 😅'); return false; }
+  }
+  return true;
+}
+
+// Monta o resumo final do passo 5
+function montarResumoWizard(){
+  const lucro = precoComDesconto(wiz) - wiz.custo;
+  const margem = wiz.custo > 0 ? Math.round(lucro / wiz.custo * 100) : 0;
+  document.getElementById('wizResumo').innerHTML =
+    '<div class="cartao" style="text-align:center">' +
+      '<div style="width:90px;height:90px;border-radius:24px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:48px;overflow:hidden;background:' + wiz.cor + '">' +
+        (wiz.foto
+          ? '<img src="' + wiz.foto + '" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML=\'' + wiz.emoji + '\'">'
+          : wiz.emoji) +
+      '</div>' +
+      '<h3>' + wiz.nome + '</h3>' +
+      '<p style="color:var(--texto-suave);font-weight:700">' + wiz.categoria + '</p>' +
+      (wiz.descricao ? '<p style="font-size:14px">' + wiz.descricao + '</p>' : '') +
+      '<div class="prod-valores">' +
+        '<div class="v"><b>' + formatarPreco(wiz.custo) + '</b><span>Custo 💸</span></div>' +
+        '<div class="v"><b>' + formatarPreco(precoComDesconto(wiz)) + (wiz.desconto>0?' (-'+wiz.desconto+'%)':'') + '</b><span>Venda 🏷️</span></div>' +
+        '<div class="v"><b style="color:var(--verde)">' + formatarPreco(lucro) + '</b><span>Lucro (' + margem + '%) 💰</span></div>' +
+      '</div>' +
+      '<p>📦 ' + wiz.estoque + ' unidades na prateleira</p>' +
+    '</div>';
+}
+
+document.getElementById('wizVoltar').onclick = ()=>{ if(passoAtual > 1) mostrarPasso(passoAtual - 1); };
+
+document.getElementById('wizAvancar').onclick = ()=>{
+  if(!validarPasso(passoAtual)) return;
+  if(passoAtual < 5){ mostrarPasso(passoAtual + 1); return; }
+  // PASSO 5: salvar de verdade!
+  const produtos = lerProdutos();
+  const novo = {
+    id: Date.now(), // carimbo de tempo = id único, nunca repete
+    nome: wiz.nome,
+    emoji: wiz.emoji,
+    categoria: wiz.categoria,
+    custo: wiz.custo,
+    precoVenda: wiz.precoVenda,
+    desconto: wiz.desconto,
+    estoque: wiz.estoque,
+    cor: wiz.cor,
+    status: 'disponivel',
+    vendas: 0,
+    foto: wiz.foto || '',           // vazio = a vitrine usa o emoji
+    descricao: wiz.descricao || ''
+  };
+  produtos.push(novo);
+  salvarProdutos(produtos);
+  gravarLog('➕ Novo produto', novo.nome + ' por ' + formatarPreco(novo.precoVenda));
+  soltarConfete(80);
+  toast('Mais um produto na vitrine! Vocês estão arrasando! 💪');
+  lunaDiz('Se comprou por R$10 e vende por R$25, seu lucro é R$15 — margem de 150%! 📈');
+  // Limpa o wizard pra próxima vez
+  wiz = {};
+  document.getElementById('wizNome').value = '';
+  document.getElementById('wizCategoria').value = '';
+  document.getElementById('wizFoto').value = '';
+  document.getElementById('wizDescricao').value = '';
+  document.getElementById('wizFotoPreview').innerHTML = '';
+  document.getElementById('wizCusto').value = '';
+  document.getElementById('wizVenda').value = '';
+  document.getElementById('wizEstoque').value = '';
+  document.getElementById('wizDesconto').value = '';
+  document.querySelectorAll('#wizEmojis button, #wizCores button').forEach(b=> b.classList.remove('sel'));
+  atualizarCalcLucro();
+  mostrarPasso(1);
+  renderTudo();
+};
+
+/* ============================================================
+   💰 ABA REGISTRAR VENDA — o coração do negócio!
+   ============================================================ */
+let carrinhoVenda = {}; // { idDoProduto: quantidade }
+
+function renderVenda(){
+  const produtos = lerProdutos().filter(p=> p.status === 'disponivel' && p.estoque > 0);
+  const caixa = document.getElementById('vendaProdutos');
+  caixa.innerHTML = '';
+  if(produtos.length === 0){
+    caixa.innerHTML = '<div class="cartao" style="text-align:center">Nenhum produto disponível pra vender agora 😅</div>';
+    return;
+  }
+  produtos.forEach(p=>{
+    const qtd = carrinhoVenda[p.id] || 0;
+    const item = document.createElement('div');
+    item.className = 'venda-item';
+    item.innerHTML =
+      '<div class="prod-emoji" style="background:' + p.cor + ';width:44px;height:44px;font-size:22px;flex:0 0 44px;overflow:hidden">' +
+        (p.foto ? '<img src="' + p.foto + '" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML=\'' + p.emoji + '\'">' : p.emoji) +
+      '</div>' +
+      '<div style="min-width:0">' +
+        '<div style="font-weight:800;font-size:15px;line-height:1.2">' + p.nome + '</div>' +
+        '<div style="font-size:13px;color:var(--texto-suave);font-weight:600">' + formatarPreco(precoComDesconto(p)) + ' • ' + p.estoque + ' un</div>' +
+      '</div>' +
+      '<div class="qtd-ctl">' +
+        '<button type="button" aria-label="Tirar um">−</button>' +
+        '<span class="qtd">' + qtd + '</span>' +
+        '<button type="button" aria-label="Colocar um">+</button>' +
+      '</div>';
+    const [btnMenos, btnMais] = item.querySelectorAll('button');
+    btnMenos.onclick = ()=>{
+      if((carrinhoVenda[p.id]||0) > 0){
+        carrinhoVenda[p.id]--;
+        if(carrinhoVenda[p.id] === 0) delete carrinhoVenda[p.id];
+        renderVenda();
+      }
+    };
+    btnMais.onclick = ()=>{
+      if((carrinhoVenda[p.id]||0) < p.estoque){
+        carrinhoVenda[p.id] = (carrinhoVenda[p.id]||0) + 1;
+        renderVenda();
+      }else{
+        toast('Só tem ' + p.estoque + ' unidades de "' + p.nome + '"! 😅');
+      }
+    };
+    caixa.appendChild(item);
+  });
+  atualizarTotalVenda();
+}
+
+// Calcula total e lucro em tempo real (com desconto extra, se houver)
+function calcularVenda(){
+  const produtos = lerProdutos();
+  const descExtra = Math.min(90, Math.max(0, parseInt(document.getElementById('vendaDescExtra').value) || 0));
+  let total = 0, lucro = 0;
+  Object.keys(carrinhoVenda).forEach(id=>{
+    const p = produtos.find(x=> x.id == id);
+    if(!p) return;
+    let unit = precoComDesconto(p);
+    unit = Math.round(unit * (100 - descExtra) / 100); // aplica o desconto extra
+    total += unit * carrinhoVenda[id];
+    lucro += (unit - p.custo) * carrinhoVenda[id];
+  });
+  return { total, lucro };
+}
+
+function atualizarTotalVenda(){
+  const { total, lucro } = calcularVenda();
+  document.getElementById('vendaTotal').innerHTML =
+    '<div>Total da venda</div>' +
+    '<div class="grande">' + formatarPreco(total) + '</div>' +
+    '<div style="font-size:14px">Lucro estimado: ' + formatarPreco(lucro) + '</div>';
+}
+document.getElementById('vendaDescExtra').addEventListener('input', atualizarTotalVenda);
+
+// ✅ CONFIRMAR A VENDA!
+document.getElementById('btnConfirmarVenda').onclick = ()=>{
+  const itens = Object.keys(carrinhoVenda);
+  if(itens.length === 0){ toast('Escolham pelo menos 1 produto! 🤗'); return; }
+  const produtos = lerProdutos();
+  const descExtra = Math.min(90, Math.max(0, parseInt(document.getElementById('vendaDescExtra').value) || 0));
+  const { total, lucro } = calcularVenda();
+
+  // Monta a lista de itens da venda e dá baixa no estoque
+  const itensVenda = [];
+  let zerouAlgum = false;
+  itens.forEach(id=>{
+    const p = produtos.find(x=> x.id == id);
+    if(!p) return;
+    const qtd = carrinhoVenda[id];
+    let unit = Math.round(precoComDesconto(p) * (100 - descExtra) / 100);
+    itensVenda.push({ produtoId: p.id, nome: p.nome, emoji: p.emoji, qtd: qtd, precoUnit: unit, custoUnit: p.custo, desconto: (p.desconto||0) + descExtra });
+    p.estoque -= qtd;
+    p.vendas = (p.vendas||0) + qtd;
+    if(p.estoque <= 0){
+      p.estoque = 0;
+      p.status = 'esgotado'; // zerou → esgotado → Troca Rápida aparece na aba Produtos!
+      zerouAlgum = true;
+    }
+  });
+  salvarProdutos(produtos);
+
+  // Grava a venda (o Dashboard lê daqui!)
+  const vendas = lerVendas();
+  vendas.unshift({ id: Date.now(), data: new Date().toISOString(), itens: itensVenda, total: total, lucro: lucro });
+  salvarVendas(vendas);
+
+  gravarLog('💰 Vendeu!', itensVenda.map(i=> i.qtd + 'x ' + i.nome).join(', ') + ' = ' + formatarPreco(total));
+
+  // Festa! 🎉
+  soltarConfete(80);
+  toast('Cha-ching! 💰 ' + formatarPreco(lucro) + ' de lucro!');
+
+  // Luna comemora a 1ª venda do dia
+  const hoje = new Date().toDateString();
+  const primeiraHoje = vendas.filter(v=> v.id !== Date.now() && new Date(v.data).toDateString() === hoje).length === 0;
+  if(primeiraHoje) lunaDiz('Primeira venda do dia! O caixa sorriu! 🥹');
+  else if(zerouAlgum) lunaDiz('Produto que esgota rápido é CAMPEÃO DE VENDAS! 🏆 Olhem a Troca Rápida na aba Produtos!');
+
+  carrinhoVenda = {};
+  document.getElementById('vendaDescExtra').value = '';
+  renderTudo();
+};
+
+// Últimas 10 vendas + botão desfazer
+function renderHistoricoVendas(){
+  const vendas = lerVendas().slice(0, 10);
+  const caixa = document.getElementById('ultimasVendas');
+  if(vendas.length === 0){
+    caixa.innerHTML = '<div class="cartao" style="text-align:center">Nenhuma venda ainda. A primeira vem logo! 🌱</div>';
+    return;
+  }
+  caixa.innerHTML = '';
+  vendas.forEach(v=>{
+    const div = document.createElement('div');
+    div.className = 'hist-venda';
+    const data = new Date(v.data);
+    div.innerHTML =
+      '<div style="min-width:0">' +
+        '<div style="font-weight:800;font-size:14px">' + v.itens.map(i=> i.qtd + 'x ' + i.emoji + ' ' + i.nome).join(', ') + '</div>' +
+        '<small>' + data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) + ' • ' + formatarPreco(v.total) + ' (lucro ' + formatarPreco(v.lucro) + ')</small>' +
+      '</div>' +
+      '<button type="button">↩️ Desfazer</button>';
+    div.querySelector('button').onclick = ()=> desfazerVenda(v.id);
+    caixa.appendChild(div);
+  });
+}
+
+// ↩️ Desfazer: devolve o estoque e apaga a venda
+function desfazerVenda(idVenda){
+  abrirModal(
+    '<h3>↩️ Desfazer essa venda?</h3>' +
+    '<p style="color:var(--texto-suave);font-weight:600">O estoque volta e o registro some. Só usem se registraram errado!</p>' +
+    '<div class="modal-botoes">' +
+      '<button class="btn-cinza" onclick="fecharModal()">Cancelar</button>' +
+      '<button class="btn-lilas" id="okDesfazer">↩️ Desfazer</button>' +
+    '</div>'
+  );
+  document.getElementById('okDesfazer').onclick = ()=>{
+    let vendas = lerVendas();
+    const venda = vendas.find(v=> v.id === idVenda);
+    if(!venda){ fecharModal(); return; }
+    const produtos = lerProdutos();
+    venda.itens.forEach(item=>{
+      const p = produtos.find(x=> x.id === item.produtoId);
+      if(p && p.status !== 'removido'){
+        p.estoque += item.qtd; // devolve as unidades
+        p.vendas = Math.max(0, (p.vendas||0) - item.qtd);
+        if(p.status === 'esgotado' && p.estoque > 0) p.status = 'disponivel';
+      }
+    });
+    salvarProdutos(produtos);
+    vendas = vendas.filter(v=> v.id !== idVenda); // apaga o registro
+    salvarVendas(vendas);
+    gravarLog('↩️ Desfez venda', venda.itens.map(i=> i.qtd + 'x ' + i.nome).join(', '));
+    fecharModal();
+    renderTudo();
+    toast('Venda desfeita! Estoque devolvido 📦');
+  };
+}
+
+/* ============================================================
+   📜 ABA LOG — o diário da loja
+   ============================================================ */
+function renderLog(){
+  let log = [];
+  try{ log = JSON.parse(localStorage.getItem('girlsShop_log')) || []; }catch(e){}
+  const caixa = document.getElementById('listaLog');
+  if(log.length === 0){
+    caixa.innerHTML = '<div class="cartao" style="text-align:center">O diário está vazio. Façam algo pra ele contar! 📖</div>';
+    return;
+  }
+  caixa.innerHTML = '';
+  log.slice(0, 50).forEach(l=>{
+    const data = new Date(l.data);
+    const div = document.createElement('div');
+    div.className = 'log-item';
+    div.innerHTML =
+      '<div style="font-weight:700">' + l.acao + '</div>' +
+      '<div style="font-size:14px">' + l.detalhe + (l.motivo ? ' <i>(motivo: ' + l.motivo + ')</i>' : '') + '</div>' +
+      '<div class="log-data">' + data.toLocaleDateString('pt-BR') + ' às ' + data.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) + '</div>';
+    caixa.appendChild(div);
+  });
+}
+
+/* ============================================================
+   ⚙️ ABA CONFIGURAÇÕES
+   ============================================================ */
+function renderConfig(){
+  const cfg = lerConfig();
+  document.getElementById('cfgNome').value = cfg.nomeLoja || 'Girls Shop';
+  document.getElementById('cfgWhats').value = cfg.whatsapp || '';
+  document.getElementById('cfgGrupo').value = cfg.linkGrupo || '';
+  document.getElementById('cfgNuvem').value = cfg.linkNuvem || '';
+  document.getElementById('statusNuvem').textContent =
+    (cfg.linkNuvem ? '☁️ Nuvem conectada! A Planilha Viva está ligada ✨' : '💾 Modo local: os dados ficam só neste aparelho');
+  document.getElementById('cfgMeta').value = cfg.metaMensal ? (cfg.metaMensal/100).toFixed(2) : '';
+  document.getElementById('cfgNiver1').value = (cfg.aniversarios && cfg.aniversarios[0]) || '';
+  document.getElementById('cfgNiver2').value = (cfg.aniversarios && cfg.aniversarios[1]) || '';
+}
+
+// Confere se a data de aniversário é válida (DD/MM)
+function niverValido(txt){
+  if(!txt) return true; // vazio é permitido
+  const m = txt.match(/^(\d{2})\/(\d{2})$/);
+  if(!m) return false;
+  const dia = parseInt(m[1]), mes = parseInt(m[2]);
+  return dia >= 1 && dia <= 31 && mes >= 1 && mes <= 12;
+}
+
+document.getElementById('btnSalvarCfg').onclick = ()=>{
+  const cfg = lerConfig();
+  const nome = document.getElementById('cfgNome').value.trim();
+  const whats = document.getElementById('cfgWhats').value.replace(/\D/g, ''); // só números!
+  const meta = paraCentavos(document.getElementById('cfgMeta').value);
+  const n1 = document.getElementById('cfgNiver1').value.trim();
+  const n2 = document.getElementById('cfgNiver2').value.trim();
+  const grupo = document.getElementById('cfgGrupo').value.trim();
+  const nuvem = document.getElementById('cfgNuvem').value.trim();
+
+  if(!nome){ toast('A loja precisa de um nome! 🏪'); return; }
+  if(whats && whats.length < 10){ toast('WhatsApp estranho... usem DDD + número 📲'); return; }
+  if(document.getElementById('cfgMeta').value && meta === null){ toast('Meta estranha 🤗'); return; }
+  if(!niverValido(n1) || !niverValido(n2)){ toast('Aniversário no formato DD/MM, tipo 15/03 🎂'); return; }
+  if(grupo && !/^https:\/\/(chat\.)?whatsapp\.com\/.+/.test(grupo)){
+    toast('Esse link não parece de grupo do WhatsApp 🤔 Ele começa com https://chat.whatsapp.com/');
+    return;
+  }
+  if(nuvem && !/^https:\/\/script\.google(macros)?\.com\/.+/.test(nuvem)){
+    toast('Esse link não parece da nuvem 🤔 Ele começa com https://script.google.com/macros/');
+    return;
+  }
+
+  cfg.nomeLoja = nome;
+  cfg.whatsapp = whats;
+  cfg.linkGrupo = grupo;
+  cfg.linkNuvem = nuvem;
+  cfg.metaMensal = meta || 0;
+  cfg.aniversarios = [n1, n2];
+  salvarConfig(cfg);
+  gravarLog('⚙️ Mudou configurações', 'Nome: ' + nome + (whats ? ', Whats atualizado' : ''));
+  document.getElementById('nomeLojaTopo').textContent = nome;
+  toast('Configurações salvas! ✨');
+};
+
+// 🔑 Trocar o PIN (pede o atual + o novo 2 vezes)
+document.getElementById('btnTrocarPin').onclick = ()=>{
+  const cfg = lerConfig();
+  const atual = document.getElementById('pinAtual').value;
+  const n1 = document.getElementById('pinNovo1').value;
+  const n2 = document.getElementById('pinNovo2').value;
+  if(atual !== (cfg.pin || '1234')){ toast('PIN atual errado! 🤔'); return; }
+  if(!/^\d{4}$/.test(n1)){ toast('O novo PIN precisa ter 4 números! 🔢'); return; }
+  if(n1 !== n2){ toast('Os dois PINs novos não combinam! 😅'); return; }
+  cfg.pin = n1;
+  salvarConfig(cfg);
+  gravarLog('🔐 Trocou o PIN', 'Agora o painel está mais seguro!');
+  document.getElementById('avisoPin').style.display = 'none'; // some o aviso amarelo
+  document.getElementById('pinAtual').value = '';
+  document.getElementById('pinNovo1').value = '';
+  document.getElementById('pinNovo2').value = '';
+  toast('PIN trocado! Guardem bem! 🔐');
+  lunaDiz('PIN novo, painel seguro! Empreendedoras profissionais protegem o caixa 💜');
+};
+
+// 🚪 Sair: limpa a sessão e volta pra tela do PIN
+document.getElementById('btnSair').onclick = ()=>{
+  sessionStorage.removeItem('girlsShop_sessao');
+  location.reload();
+};
+
+/* ============================================================
+   ☁️ NUVEM — a Planilha Viva!
+   Se o "Link da Nuvem" estiver salvo nas Configurações, tudo se
+   sincroniza sozinho com o Google Planilhas. Sem nuvem? A loja
+   continua funcionando igual, só no aparelho. 🪂
+   ============================================================ */
+// Link da nuvem gravado pelo arquiteto 🌙 (as sócias podem trocar aqui no admin ⚙️)
+const LINK_NUVEM_PADRAO = 'https://script.google.com/macros/s/AKfycbxw5SjeYtgLYU416slAdyj5ybTwe3_hHHVNtw2pL7-iP_MvW8bLZL773NprCBJJubepkQ/exec';
+function urlNuvem(){
+  try{ return (lerConfig().linkNuvem || LINK_NUVEM_PADRAO).trim(); }catch(e){ return LINK_NUVEM_PADRAO; }
+}
+function temNuvem(){ return /^https:\/\/script\.google(macros)?\.com\//.test(urlNuvem()); }
+
+// Guarda as funções originais de salvar ANTES do embrulho mágico
+const salvarProdutosLocal = salvarProdutos;
+const salvarVendasLocal = salvarVendas;
+const salvarConfigLocal = salvarConfig;
+
+// Manda TUDO pra nuvem (POST text/plain de propósito: passa liso pelo CORS!)
+function enviarTudoParaNuvem(){
+  if(!temNuvem()) return;
+  const cfg = lerConfig();
+  cfg.atualizadoEm = Date.now();
+  salvarConfigLocal(cfg);
+  let logLocal = [];
+  try{ logLocal = JSON.parse(localStorage.getItem('girlsShop_log')) || []; }catch(e){}
+  const pacote = {
+    acao: 'salvarTudo',
+    atualizadoEm: cfg.atualizadoEm,
+    produtos: lerProdutos(),
+    vendas: lerVendas(),
+    config: cfg,
+    log: logLocal
+  };
+  fetch(urlNuvem(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(pacote)
+  }).then(r=> r.json()).then(d=>{
+    if(d && d.ok){
+      localStorage.removeItem('girlsShop_nuvemPendente');
+    }else{
+      localStorage.setItem('girlsShop_nuvemPendente','1');
+    }
+  }).catch(()=>{
+    // Sem internet? Guarda a pendência e sincroniza na próxima abertura 🪂
+    localStorage.setItem('girlsShop_nuvemPendente','1');
+  });
+}
+
+// ✨ Embrulho mágico: toda vez que a loja salvar algo, a nuvem recebe também!
+salvarProdutos = function(lista){ salvarProdutosLocal(lista); enviarTudoParaNuvem(); };
+salvarVendas = function(v){ salvarVendasLocal(v); enviarTudoParaNuvem(); };
+salvarConfig = function(cfg){ salvarConfigLocal(cfg); enviarTudoParaNuvem(); };
+
+// Puxa os dados da nuvem. Nuvem vazia + loja cheia = MIGRAÇÃO AUTOMÁTICA! 🌱
+function puxarDaNuvem(depois){
+  if(!temNuvem()){ if(depois) depois(false); return; }
+  fetch(urlNuvem() + '?acao=ler&t=' + Date.now())
+    .then(r=> r.json())
+    .then(d=>{
+      if(!d || !d.ok){ if(depois) depois(false); return; }
+      const cfgLocal = lerConfig();
+
+      // 🌱 Migração: a nuvem nasceu vazia e a loja local tem tudo!
+      if((d.produtos || []).length === 0 && lerProdutos().length > 0){
+        enviarTudoParaNuvem();
+        toast('☁️ Sua lojinha foi pra nuvem! Abra a planilha e veja! 🎉');
+        if(depois) depois(false);
+        return;
+      }
+
+      // Nuvem mais nova que o aparelho? Adota os dados dela!
+      if((d.atualizadoEm || 0) > (cfgLocal.atualizadoEm || 0)){
+        salvarProdutosLocal(d.produtos || []);
+        salvarVendasLocal(d.vendas || []);
+        const cfgNova = d.config || {};
+        cfgNova.linkNuvem = cfgLocal.linkNuvem; // o link mora no aparelho!
+        cfgNova.atualizadoEm = d.atualizadoEm;
+        cfgNova.seedCarregado = true;
+        salvarConfigLocal(cfgNova);
+        try{ localStorage.setItem('girlsShop_log', JSON.stringify(d.log || [])); }catch(e){}
+        if(depois) depois(true);
+      }else if(depois) depois(false);
+    })
+    .catch(()=>{ if(depois) depois(false); });
+}
+
+/* ============================================================
+   📷 FOTO MÁGICA — tira/escolhe a foto e o site faz TODO o resto!
+   Encolhe a imagem (máx. 800px) e, se tiver nuvem, manda direto
+   pro Google Drive da família. Sem nuvem, guarda no aparelho.
+   ============================================================ */
+function encolherFoto(arquivo, callback){
+  const leitor = new FileReader();
+  leitor.onload = function(ev){
+    const img = new Image();
+    img.onload = function(){
+      const MAX = 800; // tamanho perfeito: linda e levinha!
+      let w = img.width, h = img.height;
+      if(w > h && w > MAX){ h = Math.round(h * MAX / w); w = MAX; }
+      if(h >= w && h > MAX){ w = Math.round(w * MAX / h); h = MAX; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.src = ev.target.result;
+  };
+  leitor.readAsDataURL(arquivo);
+}
+
+// Liga o botãozinho de foto: botão → input escondido → mágica acontece ✨
+function ligarFotoMagica(idBotao, idInput, idCampoUrl, idPreview){
+  const botao = document.getElementById(idBotao);
+  const input = document.getElementById(idInput);
+  if(!botao || !input) return;
+  botao.onclick = ()=> input.click();
+  input.onchange = ()=>{
+    const arquivo = input.files && input.files[0];
+    input.value = ''; // permite escolher a mesma foto de novo depois
+    if(!arquivo) return;
+    encolherFoto(arquivo, function(fotoPequena){
+      const campo = document.getElementById(idCampoUrl);
+      const preview = document.getElementById(idPreview);
+      const imgTag = function(src){
+        return '<img src="' + src + '" style="width:100%;max-height:160px;object-fit:cover;border-radius:14px">';
+      };
+      if(temNuvem()){
+        if(preview) preview.innerHTML = '<p style="font-weight:700">☁️ Mandando a foto pra nuvem...</p>';
+        fetch(urlNuvem(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ acao: 'foto', imagem: fotoPequena })
+        }).then(r=> r.json()).then(d=>{
+          if(d && d.ok && d.url){
+            campo.value = d.url;
+            if(preview) preview.innerHTML = imgTag(d.url);
+            toast('Foto linda salva na nuvem! ☁️📸');
+          }else{
+            campo.value = fotoPequena;
+            if(preview) preview.innerHTML = imgTag(fotoPequena);
+            toast('A nuvem não respondeu... guardei a foto aqui no aparelho! 💾');
+          }
+        }).catch(()=>{
+          campo.value = fotoPequena;
+          if(preview) preview.innerHTML = imgTag(fotoPequena);
+          toast('Sem internet? Guardei a foto aqui no aparelho! 💾');
+        });
+      }else{
+        campo.value = fotoPequena;
+        if(preview) preview.innerHTML = imgTag(fotoPequena);
+        toast('Foto guardada! ✨ (Com a nuvem, ela vai direto pro Drive!)');
+      }
+    });
+  };
+}
+
+/* ============================================================
+   🔄 RENDER GERAL + INICIALIZAÇÃO
+   ============================================================ */
+function renderTudo(){
+  renderProdutos();
+  renderVenda();
+  renderHistoricoVendas();
+  renderLog();
+  renderConfig();
+  atualizarCategorias();
+}
+
+// Quando a página abre...
+carregarSeed();      // 1ª vez? cria produtos de exemplo
+montarTeclado();     // monta o teclado do PIN
+mostrarPasso(1);     // wizard começa no passo 1
+
+// ☁️ Sincroniza com a nuvem (se estiver configurada)...
+puxarDaNuvem(function(mudou){
+  if(mudou){
+    renderTudo(); // redesenha tudo com as novidades da planilha!
+    toast('☁️ Novidades da nuvem chegaram! ✨');
+  }
+});
+// ...e se ficou algo pendente de enviar, manda agora!
+if(localStorage.getItem('girlsShop_nuvemPendente') === '1') enviarTudoParaNuvem();
+
+// Se já entrou com PIN nessa aba, pula direto pro painel!
+if(sessionStorage.getItem('girlsShop_sessao') === 'ok'){
+  entrarNoPainel();
+}
+</script>
+</body>
+</html>
+<!-- ✅ Arquivo completo -->

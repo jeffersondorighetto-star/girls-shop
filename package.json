@@ -1,0 +1,9 @@
+{
+  "name": "girls-shop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Girls Shop — vitrine, painel das sócias e placar (HTML estático, zero dependências)",
+  "scripts": {
+    "dev": "node server.js"
+  }
+}
