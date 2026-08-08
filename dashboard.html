@@ -493,6 +493,21 @@ function avatarSocia(nome, tam){
     nome.charAt(0) + '</span>';
 }
 
+// 📸 O TIME: se existir avatares/equipe.jpg, a foto das três aparece;
+// senão, os 3 círculos juntinhos seguram a ponta (plano B automático!)
+function timeSociasHTML(largura, altura, tamAvatar){
+  largura = largura || 300; altura = altura || 130; tamAvatar = tamAvatar || 52;
+  const circulos = SOCIAS.map(function(s, i){
+    return '<span style="margin-left:' + (i ? '-12px' : '0') + ';border:3px solid #fff;border-radius:50%;display:inline-flex">' + avatarSocia(s, tamAvatar) + '</span>';
+  }).join('');
+  return '<span style="position:relative;display:flex;align-items:center;justify-content:center;width:100%;max-width:' + largura + 'px;height:' + altura + 'px;margin:0 auto">' +
+      '<span style="display:inline-flex;align-items:center">' + circulos + '</span>' +
+      '<img src="avatares/equipe.jpg" alt="Valentina, Alice e Helena" ' +
+      'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:22px" ' +
+      'onerror="this.style.display=\'none\'">' +
+    '</span>';
+}
+
 // Mostra um erro gentil no topo
 function mostrarErro(msg){
   document.getElementById('avisoErro').innerHTML =
@@ -602,9 +617,10 @@ function desenhar(){
         <p>Bora divulgar a vitrine no WhatsApp! Cada cliente novo é uma chance de o placar subir! 💪✨</p>
         <a href="admin.html">Ir para o Admin →</a>
       </div>`;
-    desenharMeta(config, todas);
-  desenharCofrinho(); // a meta olha o mês inteiro, mesmo sem vendas no filtro
+    desenharMeta(config, todas); // a meta olha o mês inteiro, mesmo sem vendas no filtro
+    desenharCofrinho();
     desenharLuna(0);
+    desenharTime();
     return;
   }
 
@@ -791,6 +807,7 @@ function desenhar(){
   desenharMeta(config, todas);
   desenharCofrinho();
   desenharLuna(n.lucro);
+  desenharTime();
 }
 
 // ---------- META MENSAL GAMIFICADA ----------
@@ -919,6 +936,20 @@ function desenharLuna(lucro){
         <h3>Luna, a Consultora</h3>
         <p>${msg}</p>
       </div>
+    </div>
+  </section>`;
+  document.getElementById('conteudo').insertAdjacentHTML('beforeend', html);
+}
+
+// ---------- 💜 O TIME — sócias nos negócios, amigas pra vida toda! ----------
+function desenharTime(){
+  const html = `
+  <section class="secao">
+    <h2>💜 O Time</h2>
+    <div class="meta-card" style="text-align:center">
+      ${timeSociasHTML(300, 130, 52)}
+      <p style="margin-top:10px;font-weight:800">Valentina • Alice • Helena</p>
+      <p style="font-size:14px;font-weight:600;color:#6b6280">Sócias nos negócios, amigas pra vida toda! 🤝✨</p>
     </div>
   </section>`;
   document.getElementById('conteudo').insertAdjacentHTML('beforeend', html);

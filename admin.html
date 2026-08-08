@@ -221,6 +221,7 @@ label{font-weight:700;display:block;margin:10px 0 4px}
   <header class="topo">
     <h1>💜 <span id="nomeLojaTopo">Girls Shop</span> — Painel</h1>
     <p>Oi, sócias! Bora cuidar da loja? 💪</p>
+    <div id="timeTopo" style="margin-top:10px"></div>
     <span class="aviso-pin" id="avisoPin" style="display:none">🔐 Troquem o PIN! Ainda está "1234" (todo mundo sabe!)</span>
   </header>
 
@@ -733,6 +734,7 @@ function entrarNoPainel(){
   document.getElementById('app').style.display = 'block';
   const cfg = lerConfig();
   document.getElementById('nomeLojaTopo').textContent = cfg.nomeLoja || 'Girls Shop';
+  document.getElementById('timeTopo').innerHTML = timeSociasHTML(230, 74, 44); // 👑 o time no topo!
   // Avisa se o PIN ainda é o de fábrica
   if((cfg.pin || '1234') === '1234'){
     document.getElementById('avisoPin').style.display = 'inline-block';
@@ -1599,6 +1601,21 @@ function avatarSocia(nome, tam){
   return '<span style="width:' + tam + 'px;height:' + tam + 'px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:' + Math.round(tam*0.42) + 'px;background:' + (cores[nome] || 'linear-gradient(135deg,#DDD6FE,#A78BFA)') + ';overflow:hidden;flex:0 0 ' + tam + 'px;vertical-align:middle">' +
     '<img src="avatares/' + nome.toLowerCase() + '.jpg" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()">' +
     nome.charAt(0) + '</span>';
+}
+
+// 📸 O TIME: se existir avatares/equipe.jpg, a foto das três aparece;
+// senão, os 3 círculos juntinhos seguram a ponta (plano B automático!)
+function timeSociasHTML(largura, altura, tamAvatar){
+  largura = largura || 300; altura = altura || 130; tamAvatar = tamAvatar || 52;
+  const circulos = SOCIAS.map(function(s, i){
+    return '<span style="margin-left:' + (i ? '-12px' : '0') + ';border:3px solid #fff;border-radius:50%;display:inline-flex">' + avatarSocia(s, tamAvatar) + '</span>';
+  }).join('');
+  return '<span style="position:relative;display:flex;align-items:center;justify-content:center;width:100%;max-width:' + largura + 'px;height:' + altura + 'px;margin:0 auto">' +
+      '<span style="display:inline-flex;align-items:center">' + circulos + '</span>' +
+      '<img src="avatares/equipe.jpg" alt="Valentina, Alice e Helena" ' +
+      'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:22px" ' +
+      'onerror="this.style.display=\'none\'">' +
+    '</span>';
 }
 
 function dataBonita(iso){
