@@ -6,7 +6,7 @@
 
 ## 1. O que é a Girls Shop?
 
-Loja virtual de **três sócias mirins** (crianças/jovens empreendedoras). Vende papelaria, acessórios, beleza e brinquedos. O cliente monta o pedido na vitrine, **copia o texto e cola no grupo da loja no WhatsApp** (grupo com as amigas — canal oficial de vendas); as sócias registram a venda manualmente no painel admin. **Não existe botão de envio direto** — o fluxo é copiar/colar proposital, e todo pedido carrega a linha "🛡️ Compra com a ciência e permissão dos meus responsáveis!" (segurança infantil).
+Loja virtual de **três sócias mirins** (crianças/jovens empreendedoras). Vende papelaria, acessórios, beleza e brinquedos. O cliente monta o pedido na vitrine, **copia o texto e cola no grupo da loja no WhatsApp** (grupo com as amigas — canal oficial de vendas); as sócias registram a venda manualmente no painel admin. **Não existe botão de envio direto** — o fluxo é copiar/colar proposital, e todo pedido carrega a linha "🛡️ Meus responsáveis estão sabendo e autorizaram essa compra! ✅" (segurança infantil; linguagem natural desde ago/2026). A vitrine exibe os avatares das sócias no hero (autorizado pela arquiteta/responsável).
 
 **Filosofia do projeto (respeite SEMPRE):**
 - 🧒 Tudo pensado para crianças: linguagem simples, fonte mínima 16px, alvos de toque ≥ 44px
