@@ -957,10 +957,16 @@ function precoFinal(produto){
   return produto.precoVenda;
 }
 
-// Produtos que o cliente pode ver: disponíveis e com estoque
+// ✨ Sob encomenda = sem estoque em casa: a loja compra DEPOIS do pedido.
+// Pra esses, o carrinho permite até 10 por pedido (sem "esgotado"!).
+function limiteEstoque(p){
+  return p.sobEncomenda ? 10 : p.estoque;
+}
+
+// Produtos que o cliente pode ver: disponíveis (com estoque OU sob encomenda)
 function produtosVisiveis(){
   return lerProdutos().filter(function(p){
-    return p.status === "disponivel" && p.estoque > 0;
+    return p.status === "disponivel" && (p.estoque > 0 || p.sobEncomenda);
   });
 }
 
@@ -1014,7 +1020,7 @@ function abrirDetalhes(id){
 
   const final = precoFinal(p);
   const noCarrinho = qtdNoCarrinho(p.id);
-  const lotado = noCarrinho >= p.estoque; // já pegou tudo que tem?
+  const lotado = noCarrinho >= limiteEstoque(p); // já pegou tudo que tem?
 
   // Preço: com desconto, mostra o antigo riscado
   let precoHTML = '<span class="preco-atual">' + formatarPreco(final) + '</span>';
@@ -1032,7 +1038,9 @@ function abrirDetalhes(id){
       '<div class="modal-categoria">' + p.categoria + '</div>' +
       (p.descricao ? '<p class="modal-descricao">' + p.descricao + '</p>' : '') +
       '<div class="modal-precos">' + precoHTML + '</div>' +
-      (p.estoque <= 3 ? '<div class="modal-estoque">⏳ Só restam ' + p.estoque + '!</div>' : '') +
+      (p.sobEncomenda
+        ? '<div class="modal-estoque" style="color:#0D9488">✨ Sob encomenda — a loja prepara especialmente pra você!</div>'
+        : (p.estoque <= 3 ? '<div class="modal-estoque">⏳ Só restam ' + p.estoque + '!</div>' : '')) +
       '<button class="btn-adicionar" id="modal-btn-add" ' + (lotado ? "disabled" : "") + '>' +
         (lotado ? "No carrinho! ✅" : "Adicionar ao carrinho 🛒") +
       '</button>' +
@@ -1106,7 +1114,7 @@ function desenharProdutos(){
   lista.forEach(function(p){
     const final = precoFinal(p);
     const noCarrinho = qtdNoCarrinho(p.id);
-    const lotado = noCarrinho >= p.estoque; // já pegou tudo que tem?
+    const lotado = noCarrinho >= limiteEstoque(p); // já pegou tudo que tem?
 
     const card = document.createElement("article");
     card.className = "card-produto";
@@ -1127,9 +1135,12 @@ function desenharProdutos(){
       precoHTML = '<span class="preco-atual">' + formatarPreco(final) + '</span>';
     }
 
-    // Aviso de últimas unidades
+    // Aviso de últimas unidades (ou o selo mágico de sob encomenda ✨)
     let avisoEstoque = "";
-    if(p.estoque <= 3){
+    if(p.sobEncomenda){
+      avisoEstoque = '<div class="card-categoria" style="color:#0D9488;font-weight:700;">' +
+                     '✨ Sob encomenda!</div>';
+    }else if(p.estoque <= 3){
       avisoEstoque = '<div class="card-categoria" style="color:var(--coral);font-weight:700;">' +
                      '⏳ Só restam ' + p.estoque + '!</div>';
     }
@@ -1180,8 +1191,10 @@ function adicionarAoCarrinho(id){
 
   const item = carrinho.find(function(i){ return i.id === id; });
   if(item){
-    if(item.qtd >= produto.estoque){
-      mostrarToast("Você já pegou tudo que temos de " + produto.nome + " 😅");
+    if(item.qtd >= limiteEstoque(produto)){
+      mostrarToast(produto.sobEncomenda
+        ? "Máximo de 10 por pedido de " + produto.nome + " 😅"
+        : "Você já pegou tudo que temos de " + produto.nome + " 😅");
       return;
     }
     item.qtd++;
@@ -1206,9 +1219,11 @@ function mudarQuantidade(id, delta){
     removerDoCarrinho(id);
     return;
   }
-  if(item.qtd > produto.estoque){
-    item.qtd = produto.estoque;
-    mostrarToast("Só temos " + produto.estoque + " de " + produto.nome + " 😅");
+  if(item.qtd > limiteEstoque(produto)){
+    item.qtd = limiteEstoque(produto);
+    mostrarToast(produto.sobEncomenda
+      ? "Máximo de 10 por pedido de " + produto.nome + " 😅"
+      : "Só temos " + produto.estoque + " de " + produto.nome + " 😅");
   }
   salvarCarrinho();
   atualizarTudoCarrinho();
@@ -1295,7 +1310,7 @@ function desenharDrawer(){
         '<button class="btn-qtd btn-menos" aria-label="Diminuir">−</button>' +
         '<span class="qtd-numero">' + item.qtd + '</span>' +
         '<button class="btn-qtd btn-mais" aria-label="Aumentar" ' +
-          (item.qtd >= p.estoque ? "disabled" : "") + '>+</button>' +
+          (item.qtd >= limiteEstoque(p) ? "disabled" : "") + '>+</button>' +
         '<button class="btn-lixeira" aria-label="Remover">🗑️</button>' +
       '</div>';
 
@@ -1319,14 +1334,15 @@ function validarCarrinhoContraEstoque(){
   carrinho.forEach(function(item){
     const p = produtos.find(function(x){ return x.id === item.id; });
     // Produto sumiu ou esgotou? Tira do carrinho com aviso gentil
-    if(!p || p.status !== "disponivel" || p.estoque <= 0){
+    // (✨ sob encomenda nunca "esgota": a loja compra depois do pedido!)
+    if(!p || p.status !== "disponivel" || (p.estoque <= 0 && !p.sobEncomenda)){
       mostrarToast("Ops! " + (p ? p.nome : "Um produto") + " acabou de sair da vitrine 😅");
       removeuAlgo = true;
       return;
     }
-    // Se a quantidade passou do estoque, ajusta
-    if(item.qtd > p.estoque){
-      item.qtd = p.estoque;
+    // Se a quantidade passou do limite, ajusta
+    if(item.qtd > limiteEstoque(p)){
+      item.qtd = limiteEstoque(p);
       mostrarToast("Ajustamos a quantidade de " + p.nome + " 🤗");
       removeuAlgo = true;
     }
@@ -1346,6 +1362,7 @@ function montarTextoPedido(){
 
   const nome = document.getElementById("campo-nome").value.trim() || "___";
   const nomeLoja = config.nomeLoja || "Girls Shop";
+  const temEncomenda = itens.some(function(item){ return item.produto.sobEncomenda; });
 
   let linhas = [];
   linhas.push("═══════════════════════════");
@@ -1358,7 +1375,7 @@ function montarTextoPedido(){
     const p = item.produto;
     const unitario = precoFinal(p);
     const subtotal = unitario * item.qtd;
-    linhas.push((indice + 1) + ". " + p.nome + " " + p.emoji);
+    linhas.push((indice + 1) + ". " + p.nome + " " + p.emoji + (p.sobEncomenda ? " (✨ sob encomenda)" : ""));
     linhas.push("   Qtd: " + item.qtd + " | Valor unitário: " + formatarPreco(unitario));
     linhas.push("   Subtotal: " + formatarPreco(subtotal));
     linhas.push("");
@@ -1367,6 +1384,11 @@ function montarTextoPedido(){
   linhas.push("───────────────────────────");
   linhas.push("💰 TOTAL: " + formatarPreco(totalCarrinho()));
   linhas.push("═══════════════════════════");
+  linhas.push("🛵 Entrega SEM FRETE, feita pelas sócias!");
+  linhas.push("Combinamos dia e lugar no grupo 💜");
+  if(temEncomenda){
+    linhas.push("⏰ Item sob encomenda: prazo combinado no grupo!");
+  }
   linhas.push("🛡️ Compra com a ciência e permissão");
   linhas.push("dos meus responsáveis! ✅");
 
@@ -1450,7 +1472,17 @@ function puxarDaNuvem(){
     .then(function(d){
       if(!d || !d.ok) return;
       if((d.atualizadoEm || 0) <= (config.atualizadoEm || 0)) return; // já está em dia
-      if(d.produtos && d.produtos.length) salvarProdutos(d.produtos);
+      if(d.produtos && d.produtos.length){
+        // ✨ preserva "sob encomenda" se a nuvem ainda não conhece a bandeira
+        const locais = lerProdutos();
+        d.produtos.forEach(function(pn){
+          if(pn.sobEncomenda === undefined){
+            const pl = locais.find(function(x){ return x.id === pn.id; });
+            if(pl && pl.sobEncomenda) pn.sobEncomenda = true;
+          }
+        });
+        salvarProdutos(d.produtos);
+      }
       const cfgNova = d.config || {};
       cfgNova.linkNuvem = config.linkNuvem; // o link mora no aparelho!
       cfgNova.atualizadoEm = d.atualizadoEm;

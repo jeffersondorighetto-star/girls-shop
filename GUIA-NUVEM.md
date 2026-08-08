@@ -117,3 +117,36 @@ app Drive → pasta **GirlsShop Fotos** → suba a foto (botão ＋) → toque n
 ---
 
 _Qualquer erro estranho, anote a mensagem e me chame (Kimi). Bora fazer a loja voar! 🚀💜_
+
+
+---
+
+# ⬆️ ATUALIZAÇÃO v3 — Cofrinho & Encomendas (pra quem JÁ tem a planilha)
+
+A loja evoluiu! A v3 traz: **💎 Aba Aportes**, **🛒 Aba Compras** e a coluna **"sob encomenda"** na aba Produtos. Pra ganhar tudo isso **sem perder nenhum dado**, siga estes 4 passos:
+
+## Passo 1 — Trocar o código do Apps Script
+1. Abra [script.google.com](https://script.google.com) com a conta da loja (girls.shop.sjc@gmail.com)
+2. Clique no projeto da loja (o mesmo da instalação)
+3. **Apague todo o código antigo** e **cole o novo** (arquivo `instalador-nuvem.gs` do projeto)
+4. Salve (💾)
+
+## Passo 2 — Rodar o upgrade (UMA vez só!)
+1. No menu de funções (lá em cima, ao lado de "Executar"), escolha **`atualizarLojaV3`** ⚠️ (NÃO rode `instalarLoja` — essa é só pra planilha nova!)
+2. Clique em **Executar**
+3. Se pedir autorização, autorize normalmente (é o script da loja mexendo na própria planilha)
+4. Olhe o "Registro de execução": deve aparecer **"✨ Loja atualizada pra v3!"**
+
+## Passo 3 — Publicar a nova versão (o link NÃO muda!)
+1. Clique em **Implantar → Gerenciar implantações**
+2. Toque no **✏️ (lápis)** da implantação ativa
+3. Em **"Versão"**, escolha **"Nova versão"**
+4. Clique em **Implantar**
+5. ✅ Pronto — o endereço `/exec` continua EXATAMENTE o mesmo, não precisa trocar nada no site!
+
+## Passo 4 — Conferir
+1. Abra a planilha: devem existir as abas **💎 Aportes** e **🛒 Compras**, e a coluna **"sob encomenda"** no fim da aba Produtos
+2. Teste a ponte: abra no navegador `SEU_LINK/exec?acao=ler` → deve vir `"aportes":[]` e `"compras":[]` no resultado
+3. No admin da loja, registre um aporte de teste → ele deve aparecer na aba 💎 Aportes em segundos ✨
+
+> 🤫 **Segredo técnico:** mesmo se você esquecer este upgrade, o site NÃO perde dados — os aportes e compras ficam guardados no aparelho até a nuvem aprender a guardá-los. Mas faça logo: é rapidinho!

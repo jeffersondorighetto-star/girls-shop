@@ -1,13 +1,16 @@
 /* ============================================================
-   🛍️ GIRLS SHOP — PLANILHA VIVA (Instalador Mágico) v2
+   🛍️ GIRLS SHOP — PLANILHA VIVA (Instalador Mágico) v3
    ============================================================
    O que este script faz:
    1. instalarLoja() → cria a planilha-banco-de-dados da loja,
       com abas, cores, fórmulas, listas de escolha e as Missões
-      da Luna
-   2. doGet/doPost → a "ponte" entre o site e a planilha
-   3. Upload de fotos → salva as fotos dos produtos no Drive
-   4. aoEditar() → o "ajudante automático" da planilha:
+      da Luna (planilha NOVA, do zero)
+   2. atualizarLojaV3() → UPGRADE pra quem já tinha a v2: cria as
+      abas 💎 Aportes e 🛒 Compras + a coluna "sob encomenda",
+      SEM perder nenhum dado
+   3. doGet/doPost → a "ponte" entre o site e a planilha
+   4. Upload de fotos → salva as fotos dos produtos no Drive
+   5. aoEditar() → o "ajudante automático" da planilha:
       • cria o ID sozinho quando digitam o nome do produto
       • converte link do Google Drive em foto da vitrine
       • preenche o status "disponivel" sozinho
@@ -21,7 +24,7 @@ const NOME_PASTA_FOTOS = 'GirlsShop Fotos';
 
 // Ordem das colunas da aba Produtos (preços na planilha são em REAIS,
 // o script converte pra centavos quando conversa com o site!)
-const COLUNAS_PRODUTOS = ['id','nome','emoji','categoria','custo (R$)','venda (R$)','desconto (%)','estoque','cor','status','vendidos','foto','descricao'];
+const COLUNAS_PRODUTOS = ['id','nome','emoji','categoria','custo (R$)','venda (R$)','desconto (%)','estoque','cor','status','vendidos','foto','descricao','sob encomenda'];
 
 // Emojis que aparecem na listinha de escolha (iguais aos do site!)
 const EMOJIS = ['⭐','🎀','🌸','✨','🍓','🧡','🦋','💫','👝','👑','🧸','💖','🌈','🍭','💎','🦄','🌻','🍒','🐻','🎁'];
@@ -56,6 +59,12 @@ function instalarLoja() {
 
   const abaMissoes = ss.insertSheet('🗺️ Missões da Luna');
   montarAbaMissoes(abaMissoes);
+
+  const abaAportes = ss.insertSheet('💎 Aportes');
+  montarAbaAportes(abaAportes);
+
+  const abaCompras = ss.insertSheet('🛒 Compras');
+  montarAbaCompras(abaCompras);
 
   // Pasta das fotos no Drive
   const pasta = DriveApp.createFolder(NOME_PASTA_FOTOS);
@@ -140,7 +149,7 @@ function protegerPlanilha() {
   }
 
   // Abas 100% automáticas: só o site escreve nelas
-  ['💰 Vendas', '📜 Log'].forEach(function(nome) {
+  ['💰 Vendas', '📜 Log', '💎 Aportes', '🛒 Compras'].forEach(function(nome) {
     const aba = ss.getSheetByName(nome);
     if (aba) {
       aba.protect()
@@ -191,6 +200,12 @@ function montarAbaProdutos(aba, abaCategorias, abaCores) {
     .setAllowInvalid(false).build();
   aba.getRange('J2:J1000').setDataValidation(regraStatus);
 
+  // ✨ SOB ENCOMENDA: marque "sim" se a loja só compra o produto DEPOIS do pedido
+  const regraEncomenda = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['sim'], true)
+    .setAllowInvalid(true).build();
+  aba.getRange('N2:N1000').setDataValidation(regraEncomenda);
+
   // Regras visuais: estoque baixinho fica vermelho; a cor escolhida PINTA a célula!
   const regras = [];
   regras.push(SpreadsheetApp.newConditionalFormatRule()
@@ -199,6 +214,10 @@ function montarAbaProdutos(aba, abaCategorias, abaCores) {
   regras.push(SpreadsheetApp.newConditionalFormatRule()
     .whenNumberLessThanOrEqualTo(3).setBackground('#FFE4E6')
     .setRanges([aba.getRange('H2:H1000')]).build());
+  // ✨ "sim" na coluna sob encomenda fica verdinho-água
+  regras.push(SpreadsheetApp.newConditionalFormatRule()
+    .whenTextEqualTo('sim').setBackground('#99F6E4')
+    .setRanges([aba.getRange('N2:N1000')]).build());
   // 🎨 Cada nome de cor pinta a célula da sua cor!
   const coresDaAba = abaCores.getRange('A2:C30').getValues();
   coresDaAba.forEach(c => {
@@ -305,6 +324,80 @@ function montarAbaMissoes(aba) {
   aba.getRange('A1').setNote('🗺️ A trilha de missões da Luna! Marquem ✅ quando completarem cada uma. No ritmo de vocês! 💜');
 }
 
+// 💎 Aportes: quem colocou dinheiro na loja, quando e quanto
+function montarAbaAportes(aba) {
+  aba.getRange('A1:E1').setValues([['id','data','socia','valor (R$)','obs']])
+     .setBackground('#8B5CF6').setFontColor('#FFFFFF').setFontWeight('bold');
+  aba.setFrozenRows(1);
+  aba.setColumnWidth(3, 110);
+  aba.setColumnWidth(5, 240);
+  aba.getRange('D2:D1000').setNumberFormat('R$ #,##0.00');
+  const regraSocia = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['Sócia 1','Sócia 2','Sócia 3'], true)
+    .setAllowInvalid(true).build();
+  aba.getRange('C2:C1000').setDataValidation(regraSocia);
+  aba.getRange('A1').setNote('💎 Cada linha é um aporte: dinheiro que uma sócia colocou do próprio bolso na loja. O admin registra e a planilha anota — é a base pra divisão justa dos lucros! 🤝');
+}
+
+// 🛒 Compras: a frente de aquisição (reposição de estoque + encomendas)
+function montarAbaCompras(aba) {
+  aba.getRange('A1:F1').setValues([['id','data','descricao','valor (R$)','status','origem']])
+     .setBackground('#F59E0B').setFontColor('#4A2F00').setFontWeight('bold');
+  aba.setFrozenRows(1);
+  aba.setColumnWidth(3, 300);
+  aba.getRange('D2:D1000').setNumberFormat('R$ #,##0.00');
+  const regraStatus = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['pendente','recebida'], true)
+    .setAllowInvalid(true).build();
+  aba.getRange('E2:E1000').setDataValidation(regraStatus);
+  // Pendente fica amarelinho: impossível esquecer de buscar a encomenda! ⏰
+  const regras = [SpreadsheetApp.newConditionalFormatRule()
+    .whenTextEqualTo('pendente').setBackground('#FEF3C7')
+    .setRanges([aba.getRange('E2:E1000')]).build()];
+  aba.setConditionalFormatRules(regras);
+  aba.getRange('A1').setNote('🛒 Tudo que a loja COMPRA mora aqui! "pendente" = encomenda esperando vocês comprarem (o admin cria sozinho quando vende produto sob encomenda ✨). "recebida" = produto já em mãos.');
+}
+
+/* ============================================================
+   ⬆️ ATUALIZAÇÃO v3 — rode UMA vez se a planilha JÁ EXISTE!
+   (planilha recém-instalada já nasce v3 — este upgrade é só pra
+   quem instalou antes: ganha as novidades SEM perder nenhum dado)
+   ============================================================ */
+function atualizarLojaV3() {
+  const ss = planilha(); // acha a planilha pelo ID guardado na instalação
+
+  // 1) Coluna nova "sob encomenda" na aba Produtos (se ainda não tem)
+  const abaProdutos = ss.getSheetByName('🛍️ Produtos');
+  if (abaProdutos && abaProdutos.getRange(1, 14).getValue() !== 'sob encomenda') {
+    abaProdutos.getRange(1, 14).setValue('sob encomenda')
+      .setBackground('#8B5CF6').setFontColor('#FFFFFF').setFontWeight('bold');
+    const regraSE = SpreadsheetApp.newDataValidation()
+      .requireValueInList(['sim'], true).setAllowInvalid(true).build();
+    abaProdutos.getRange('N2:N1000').setDataValidation(regraSE);
+    const regras = abaProdutos.getConditionalFormatRules();
+    regras.push(SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo('sim').setBackground('#99F6E4')
+      .setRanges([abaProdutos.getRange('N2:N1000')]).build());
+    abaProdutos.setConditionalFormatRules(regras);
+  }
+
+  // 2) Abas novas (se ainda não existem)
+  if (!ss.getSheetByName('💎 Aportes')) montarAbaAportes(ss.insertSheet('💎 Aportes'));
+  if (!ss.getSheetByName('🛒 Compras')) montarAbaCompras(ss.insertSheet('🛒 Compras'));
+
+  // 3) Proteções gentis nas abas novas
+  ['💎 Aportes', '🛒 Compras'].forEach(function(nome) {
+    const aba = ss.getSheetByName(nome);
+    if (aba) {
+      aba.protect().setWarningOnly(true)
+        .setDescription('🤖 Aba automática — só o site escreve aqui! Pode olhar à vontade 👀');
+    }
+  });
+
+  Logger.log('✨ Loja atualizada pra v3! Ganhou: abas 💎 Aportes e 🛒 Compras + coluna "sob encomenda" em Produtos.');
+  Logger.log('👉 Último passo: Implantar > Gerenciar implantações > ✏️ > Versão: Nova versão > Implantar (o link NÃO muda!)');
+}
+
 /* ============================================================
    🌉 A PONTE — doGet (site LÊ da planilha) / doPost (site ESCREVE)
    ============================================================ */
@@ -331,6 +424,8 @@ function doGet(e) {
     const vendas = lerAbaVendas(ss.getSheetByName('💰 Vendas'));
     const config = lerAbaConfig(ss.getSheetByName('⚙️ Config'));
     const log = lerAbaLog(ss.getSheetByName('📜 Log'));
+    const aportes = lerAbaAportes(ss.getSheetByName('💎 Aportes'));
+    const compras = lerAbaCompras(ss.getSheetByName('🛒 Compras'));
 
     return responderJSON({
       ok: true,
@@ -338,7 +433,9 @@ function doGet(e) {
       produtos: produtos,
       vendas: vendas,
       config: config,
-      log: log
+      log: log,
+      aportes: aportes,
+      compras: compras
     });
   } catch (erro) {
     return responderJSON({ ok: false, erro: String(erro) });
@@ -361,6 +458,9 @@ function doPost(e) {
       escreverAbaVendas(ss.getSheetByName('💰 Vendas'), pacote.vendas || []);
       escreverAbaConfig(ss.getSheetByName('⚙️ Config'), pacote.config || {});
       escreverAbaLog(ss.getSheetByName('📜 Log'), pacote.log || []);
+      // Só escreve as abas novas se o site mandou (protege de versões antigas do site!)
+      if (pacote.aportes !== undefined) escreverAbaAportes(ss.getSheetByName('💎 Aportes'), pacote.aportes);
+      if (pacote.compras !== undefined) escreverAbaCompras(ss.getSheetByName('🛒 Compras'), pacote.compras);
       PropertiesService.getScriptProperties()
         .setProperty('ATUALIZADO_EM', String(pacote.atualizadoEm || Date.now()));
       return responderJSON({ ok: true });
@@ -408,7 +508,8 @@ function lerAbaProdutos(aba, mapaCores) {
       status: String(l[9] || 'disponivel'),
       vendas: Number(l[10] || 0),
       foto: String(l[11] || ''),
-      descricao: String(l[12] || '')
+      descricao: String(l[12] || ''),
+      sobEncomenda: String(l[13] || '').toLowerCase() === 'sim'
     });
   }
   return produtos;
@@ -461,6 +562,45 @@ function lerAbaLog(aba) {
   return log;
 }
 
+// 💎 Aportes: cada linha é dinheiro que uma sócia colocou na loja
+function lerAbaAportes(aba) {
+  if (!aba) return [];
+  const dados = aba.getDataRange().getValues();
+  const aportes = [];
+  for (let i = 1; i < dados.length; i++) {
+    const l = dados[i];
+    if (!l[0]) continue;
+    aportes.push({
+      id: Number(l[0]),
+      data: String(l[1] || ''),
+      socia: String(l[2] || ''),
+      valor: Math.round(Number(l[3] || 0) * 100), // R$ → centavos
+      obs: String(l[4] || '')
+    });
+  }
+  return aportes;
+}
+
+// 🛒 Compras: a frente de aquisição da loja (reposição + encomendas)
+function lerAbaCompras(aba) {
+  if (!aba) return [];
+  const dados = aba.getDataRange().getValues();
+  const compras = [];
+  for (let i = 1; i < dados.length; i++) {
+    const l = dados[i];
+    if (!l[0]) continue;
+    compras.push({
+      id: Number(l[0]),
+      data: String(l[1] || ''),
+      descricao: String(l[2] || ''),
+      valor: Math.round(Number(l[3] || 0) * 100), // R$ → centavos
+      status: String(l[4] || 'recebida'),
+      origem: String(l[5] || 'livre')
+    });
+  }
+  return compras;
+}
+
 /* ---------- Escrita (site → planilha). Centavos viram R$! ---------- */
 
 function limparAba(aba, numColunas) {
@@ -475,7 +615,7 @@ function escreverAbaProdutos(aba, produtos) {
     p.id, p.nome, p.emoji, p.categoria,
     (p.custo || 0) / 100, (p.precoVenda || 0) / 100, // centavos → R$
     p.desconto || 0, p.estoque || 0, p.cor || '', p.status || 'disponivel',
-    p.vendas || 0, p.foto || '', p.descricao || ''
+    p.vendas || 0, p.foto || '', p.descricao || '', p.sobEncomenda ? 'sim' : ''
   ]);
   aba.getRange(2, 1, linhas.length, COLUNAS_PRODUTOS.length).setValues(linhas);
 }
@@ -508,6 +648,28 @@ function escreverAbaLog(aba, log) {
   if (log.length === 0) return;
   const linhas = log.slice(0, 50).map(l => [l.data || '', l.acao || '', l.detalhe || '', l.motivo || '']);
   aba.getRange(2, 1, linhas.length, 4).setValues(linhas);
+}
+
+// 💎 Aportes: centavos viram R$ na planilha
+function escreverAbaAportes(aba, aportes) {
+  if (!aba) return;
+  limparAba(aba, 5);
+  if (aportes.length === 0) return;
+  const linhas = aportes.map(a => [
+    a.id, a.data, a.socia || '', (a.valor || 0) / 100, a.obs || ''
+  ]);
+  aba.getRange(2, 1, linhas.length, 5).setValues(linhas);
+}
+
+// 🛒 Compras: a frente de aquisição, em R$ na planilha
+function escreverAbaCompras(aba, compras) {
+  if (!aba) return;
+  limparAba(aba, 6);
+  if (compras.length === 0) return;
+  const linhas = compras.map(c => [
+    c.id, c.data, c.descricao || '', (c.valor || 0) / 100, c.status || 'recebida', c.origem || 'livre'
+  ]);
+  aba.getRange(2, 1, linhas.length, 6).setValues(linhas);
 }
 
 /* ---------- 📷 Upload de fotos → pasta do Drive ---------- */

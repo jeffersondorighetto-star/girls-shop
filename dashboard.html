@@ -463,6 +463,20 @@ function lerConfig(){
   }catch(e){ return {}; }
 }
 
+// 💎 Lê os aportes das sócias (quem colocou dinheiro na loja, quando e quanto)
+function lerAportes(){
+  try{
+    return JSON.parse(localStorage.getItem('girlsShop_aportes')) || [];
+  }catch(e){ return []; }
+}
+
+// 🛒 Lê as compras da loja (frente de aquisição: reposição e encomendas)
+function lerCompras(){
+  try{
+    return JSON.parse(localStorage.getItem('girlsShop_compras')) || [];
+  }catch(e){ return []; }
+}
+
 // Mostra um erro gentil no topo
 function mostrarErro(msg){
   document.getElementById('avisoErro').innerHTML =
@@ -572,7 +586,8 @@ function desenhar(){
         <p>Bora divulgar a vitrine no WhatsApp! Cada cliente novo é uma chance de o placar subir! 💪✨</p>
         <a href="admin.html">Ir para o Admin →</a>
       </div>`;
-    desenharMeta(config, todas); // a meta olha o mês inteiro, mesmo sem vendas no filtro
+    desenharMeta(config, todas);
+  desenharCofrinho(); // a meta olha o mês inteiro, mesmo sem vendas no filtro
     desenharLuna(0);
     return;
   }
@@ -758,6 +773,7 @@ function desenhar(){
   }, 60);
 
   desenharMeta(config, todas);
+  desenharCofrinho();
   desenharLuna(n.lucro);
 }
 
@@ -816,6 +832,59 @@ function desenharMeta(config, todasAsVendas){
   }
 }
 
+// ---------- 💎 COFRINHO — aportes das sócias, compras e a caixinha ----------
+function desenharCofrinho(){
+  const aportes = lerAportes();
+  const compras = lerCompras();
+  if(aportes.length === 0 && compras.length === 0) return; // ainda não usam o cofrinho
+
+  const vendas = lerVendas();
+  const totalAportes = aportes.reduce((s,a)=> s + (a.valor||0), 0);
+  const totalCompras = compras.reduce((s,c)=> s + (c.valor||0), 0);
+  const receitaVendas = vendas.reduce((s,v)=> s + (v.total||0), 0);
+  const caixinha = totalAportes + receitaVendas - totalCompras;
+  const pendentes = compras.filter(c=> c.status === 'pendente');
+
+  // Aportes por sócia (base da divisão justa de lucros!)
+  const porSocia = {};
+  aportes.forEach(a=>{ porSocia[a.socia] = (porSocia[a.socia]||0) + (a.valor||0); });
+  const chips = Object.keys(porSocia).sort().map(s=>
+    `<div class="card-num"><div class="icone">👧</div><div class="valor">${formatarPreco(porSocia[s])}</div><div class="rotulo">${s} aportou</div></div>`
+  ).join('');
+
+  let html = `
+  <section class="secao">
+    <h2>💎 Cofrinho das Sócias</h2>
+    <div class="grid-cards">
+      <div class="card-num ${caixinha >= 0 ? 'destaque-lucro' : 'lucro-negativo'}">
+        <div class="icone">💜</div>
+        <div class="valor">${formatarPreco(caixinha)}</div>
+        <div class="rotulo">Caixinha da loja</div>
+      </div>
+      <div class="card-num">
+        <div class="icone">💎</div>
+        <div class="valor">${formatarPreco(totalAportes)}</div>
+        <div class="rotulo">Total aportado</div>
+      </div>
+      <div class="card-num">
+        <div class="icone">🛒</div>
+        <div class="valor">${formatarPreco(totalCompras)}</div>
+        <div class="rotulo">Compras da loja</div>
+      </div>
+      ${chips}
+    </div>`;
+
+  if(pendentes.length > 0){
+    html += `
+    <div class="insight amarelo">
+      <h3>⏰ ${pendentes.length} compra(s) pendente(s)!</h3>
+      <p>Tem encomenda esperando vocês comprarem: <strong>${pendentes.map(c=> c.descricao).join(' • ')}</strong>. Marquem "Recebida!" no Cofrinho do admin quando chegar! 📦</p>
+    </div>`;
+  }
+  html += `</section>`;
+  document.getElementById('conteudo').insertAdjacentHTML('beforeend', html);
+}
+
 // ---------- LUANA, A CONSULTORA ----------
 function desenharLuna(lucro){
   let msg;
@@ -865,7 +934,19 @@ function puxarDaNuvem(){
       if(!d || !d.ok) return;
       const cfgLocal = lerConfig();
       if((d.atualizadoEm || 0) <= (cfgLocal.atualizadoEm || 0)) return; // já está em dia
-      if(d.produtos && d.produtos.length) salvarProdutos(d.produtos);
+      if(d.produtos && d.produtos.length){
+        // ✨ preserva "sob encomenda" se a nuvem ainda não conhece a bandeira
+        const locais = lerProdutos();
+        d.produtos.forEach(function(pn){
+          if(pn.sobEncomenda === undefined){
+            const pl = locais.find(function(x){ return x.id === pn.id; });
+            if(pl && pl.sobEncomenda) pn.sobEncomenda = true;
+          }
+        });
+        salvarProdutos(d.produtos);
+      }
+      if(d.aportes) localStorage.setItem('girlsShop_aportes', JSON.stringify(d.aportes));
+      if(d.compras) localStorage.setItem('girlsShop_compras', JSON.stringify(d.compras));
       if(d.vendas) localStorage.setItem('girlsShop_vendas', JSON.stringify(d.vendas));
       const cfgNova = d.config || {};
       cfgNova.linkNuvem = cfgLocal.linkNuvem; // o link mora no aparelho!

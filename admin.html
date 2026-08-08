@@ -229,6 +229,7 @@ label{font-weight:700;display:block;margin:10px 0 4px}
     <button data-aba="produtos" class="ativa">📦 Produtos</button>
     <button data-aba="novo">➕ Novo Produto</button>
     <button data-aba="venda">💰 Registrar Venda</button>
+    <button data-aba="cofrinho">💎 Cofrinho</button>
     <button data-aba="log">📜 Log</button>
     <button data-aba="config">⚙️ Configurações</button>
   </nav>
@@ -258,8 +259,8 @@ label{font-weight:700;display:block;margin:10px 0 4px}
       <!-- Passo 2: categoria + cor + foto + descrição -->
       <div class="passo" data-passo="2">
         <label>Categoria</label>
-        <input type="text" id="wizCategoria" list="listaCategorias" placeholder="Ex: Acessórios" maxlength="25">
-        <datalist id="listaCategorias"></datalist>
+        <select id="wizCategoriaSel" style="width:100%;padding:12px;border-radius:14px;border:2px solid #E9D5FF;font-size:16px;font-weight:700;background:#fff"></select>
+        <input type="text" id="wizCategoriaNova" placeholder="✍️ Escrevam a nova categoria" maxlength="25" style="display:none;margin-top:8px">
         <label>Cor do card na vitrine:</label>
         <div class="cor-picker" id="wizCores"></div>
         <label>📸 Link da foto (opcional — vazio = usa o emoji)</label>
@@ -282,10 +283,18 @@ label{font-weight:700;display:block;margin:10px 0 4px}
         </div>
       </div>
 
-      <!-- Passo 4: estoque + desconto -->
+      <!-- Passo 4: tipo (estoque ou encomenda) + estoque + desconto -->
       <div class="passo" data-passo="4">
-        <label>📦 Quantas unidades vocês têm?</label>
-        <input type="number" id="wizEstoque" placeholder="Ex: 5" min="1" max="999" step="1" inputmode="numeric">
+        <label>Como funciona este produto?</label>
+        <div style="display:flex;gap:10px">
+          <button type="button" class="btn-cinza" id="wizTipoEstoque" style="flex:1;outline:3px solid var(--lilas)">📦 Tenho em estoque</button>
+          <button type="button" class="btn-cinza" id="wizTipoEncomenda" style="flex:1">✨ Sob encomenda</button>
+        </div>
+        <p style="font-size:13px;color:var(--texto-suave);font-weight:600">✨ Sob encomenda = a vitrine mostra o produto SEM estoque em casa. Quando a cliente pedir, vocês compram e entregam! (a compra aparece sozinha no 💎 Cofrinho)</p>
+        <div id="wizCaixaEstoque">
+          <label>📦 Quantas unidades vocês têm?</label>
+          <input type="number" id="wizEstoque" placeholder="Ex: 5" min="1" max="999" step="1" inputmode="numeric">
+        </div>
         <label>🔥 Desconto? (0 = sem desconto, máx 90%)</label>
         <input type="number" id="wizDesconto" placeholder="Ex: 10" min="0" max="90" step="1" inputmode="numeric">
       </div>
@@ -321,6 +330,46 @@ label{font-weight:700;display:block;margin:10px 0 4px}
     <button class="btn-lilas" style="width:100%;padding:14px;font-size:18px" id="btnConfirmarVenda">✅ Confirmar venda!</button>
     <h2 style="margin:18px 0 10px">Últimas vendas 🧾</h2>
     <div id="ultimasVendas"></div>
+  </section>
+
+  <!-- 💎 ABA COFRINHO — aportes das sócias + compras da loja -->
+  <section class="aba" id="aba-cofrinho">
+    <div class="resumo-grid" id="resumoCofrinho"></div>
+
+    <div class="cartao">
+      <h2>💎 Registrar Aporte</h2>
+      <p style="color:var(--texto-suave);font-weight:600">Aporte é quando uma sócia coloca dinheiro do próprio bolso na loja (pra comprar produtos). Anotar direitinho = divisão justa no futuro! 🤝</p>
+      <label>👧 Quem está aportando?</label>
+      <select id="apoSocia" style="width:100%;padding:12px;border-radius:14px;border:2px solid #E9D5FF;font-size:16px;font-weight:700;background:#fff">
+        <option>Sócia 1</option>
+        <option>Sócia 2</option>
+        <option>Sócia 3</option>
+      </select>
+      <label>💵 Quanto? (R$)</label>
+      <input type="number" id="apoValor" placeholder="Ex: 30,00" min="0" step="0.01" inputmode="decimal">
+      <label>📝 Pra quê? (opcional)</label>
+      <input type="text" id="apoObs" placeholder="Ex: repor os glosses" maxlength="60">
+      <button class="btn-lilas" style="width:100%;margin-top:12px;padding:12px" id="btnAporte">💎 Registrar aporte!</button>
+    </div>
+
+    <div class="cartao">
+      <h2>🛒 Registrar Compra da Loja</h2>
+      <p style="color:var(--texto-suave);font-weight:600">A loja comprou produtos (pra repor estoque ou atender um pedido)? Anotem aqui pra caixinha ficar certinha! 🧾</p>
+      <label>📦 O que a loja comprou?</label>
+      <input type="text" id="comDesc" placeholder="Ex: 5 glosses + 10 scrunchies" maxlength="60">
+      <label>💸 Quanto a loja pagou no total? (R$)</label>
+      <input type="number" id="comValor" placeholder="Ex: 45,00" min="0" step="0.01" inputmode="decimal">
+      <button class="btn-lilas" style="width:100%;margin-top:12px;padding:12px" id="btnCompra">🛒 Registrar compra!</button>
+    </div>
+
+    <h2 style="margin:18px 0 10px">⏰ Compras pendentes (encomendas pra buscar!)</h2>
+    <div id="listaPendentes"></div>
+
+    <h2 style="margin:18px 0 10px">💎 Aportes das sócias</h2>
+    <div id="listaAportes"></div>
+
+    <h2 style="margin:18px 0 10px">🛒 Últimas compras da loja</h2>
+    <div id="listaCompras"></div>
   </section>
 
   <!-- 📜 ABA LOG -->
@@ -456,6 +505,38 @@ function salvarVendas(v){
     localStorage.setItem('girlsShop_vendas', JSON.stringify(v));
   }catch(e){
     avisoGentil('Ops! Não conseguimos salvar a venda 😅');
+  }
+}
+
+// 💎 Lê os aportes das sócias (quem colocou dinheiro na loja)
+function lerAportes(){
+  try{
+    return JSON.parse(localStorage.getItem('girlsShop_aportes')) || [];
+  }catch(e){ return []; }
+}
+
+// Salva os aportes
+function salvarAportes(lista){
+  try{
+    localStorage.setItem('girlsShop_aportes', JSON.stringify(lista));
+  }catch(e){
+    avisoGentil('Ops! Não conseguimos salvar o aporte 😅');
+  }
+}
+
+// 🛒 Lê as compras da loja (frente de aquisição: reposição + encomendas)
+function lerCompras(){
+  try{
+    return JSON.parse(localStorage.getItem('girlsShop_compras')) || [];
+  }catch(e){ return []; }
+}
+
+// Salva as compras
+function salvarCompras(lista){
+  try{
+    localStorage.setItem('girlsShop_compras', JSON.stringify(lista));
+  }catch(e){
+    avisoGentil('Ops! Não conseguimos salvar a compra 😅');
   }
 }
 
@@ -682,6 +763,7 @@ function prioridade(p){
   if(p.status === 'esgotado') return 0;
   if(p.status === 'removido') return 4;
   if(p.status === 'pausado') return 3;
+  if(p.sobEncomenda) return 2;       // ✨ sob encomenda não tem estoque pra ficar baixo
   if(p.estoque <= 3) return 1;       // estoque baixinho
   return 2;                           // tudo certo
 }
@@ -727,11 +809,13 @@ function renderProdutos(){
     let classe = 'produto';
     if(p.status === 'esgotado') classe += ' esgotado';
     else if(p.status === 'pausado' || p.status === 'removido') classe += ' pausado';
-    else if(p.estoque <= 3) classe += ' baixo';
+    else if(p.estoque <= 3 && !p.sobEncomenda) classe += ' baixo';
 
     // Selo de status
     let selo = '';
-    if(p.status === 'disponivel') selo = '<span class="selo disponivel">✅ À venda</span>';
+    if(p.status === 'disponivel') selo = p.sobEncomenda
+      ? '<span class="selo disponivel">✨ Sob encomenda</span>'
+      : '<span class="selo disponivel">✅ À venda</span>';
     if(p.status === 'esgotado') selo = '<span class="selo esgotado">😱 Esgotado</span>';
     if(p.status === 'pausado') selo = '<span class="selo pausado">⏸️ Pausado</span>';
     if(p.status === 'removido') selo = '<span class="selo removido">🗑️ Removido</span>';
@@ -746,7 +830,7 @@ function renderProdutos(){
         '</div>' +
         '<div>' +
           '<div class="prod-nome">' + p.nome + '</div>' +
-          '<div class="prod-sub">' + p.categoria + ' • ' + p.estoque + ' un • ' + (p.vendas||0) + ' vendidos</div>' +
+          '<div class="prod-sub">' + p.categoria + ' • ' + (p.sobEncomenda ? '✨ sob encomenda' : p.estoque + ' un') + ' • ' + (p.vendas||0) + ' vendidos</div>' +
           selo +
         '</div>' +
       '</div>' +
@@ -1093,12 +1177,35 @@ const NOMES_PASSOS = {1:'Nome e emoji', 2:'Categoria, cor e foto 📸', 3:'Preç
 // Liga a Foto Mágica do wizard 📷 (botão → câmera/galeria → preview)
 ligarFotoMagica('wizBtnFoto', 'wizFotoArquivo', 'wizFoto', 'wizFotoPreview');
 
-// Sugere as categorias que já existem (pra não ter "Acessorio" e "Acessório" separados)
-function atualizarCategorias(){
-  const cats = [...new Set(lerProdutos().map(p=> p.categoria))];
-  document.getElementById('listaCategorias').innerHTML =
-    cats.map(c=> '<option value="' + c + '">').join('');
+// Sugere as categorias: padrão + as que já existem (pra não ter "Acessorio" e "Acessório" separados)
+const CATEGORIAS_PADRAO = ['Acessórios','Papelaria','Beleza','Brinquedos','Cabelo','Bolsas','Roupas','Outros'];
+function montarSelectCategorias(){
+  const cats = [...new Set(CATEGORIAS_PADRAO.concat(lerProdutos().map(p=> p.categoria).filter(Boolean)))];
+  const sel = document.getElementById('wizCategoriaSel');
+  sel.innerHTML = '<option value="">Toquem pra escolher 👇</option>' +
+    cats.map(c=> '<option value="' + c + '">' + c + '</option>').join('') +
+    '<option value="__nova__">➕ Criar nova categoria...</option>';
 }
+document.getElementById('wizCategoriaSel').addEventListener('change', function(){
+  const nova = this.value === '__nova__';
+  document.getElementById('wizCategoriaNova').style.display = nova ? 'block' : 'none';
+  if(nova) document.getElementById('wizCategoriaNova').focus();
+});
+
+// ✨ Liga o seletor de tipo do produto: em estoque 📦 × sob encomenda
+wiz.sobEncomenda = false;
+document.getElementById('wizTipoEstoque').onclick = function(){
+  wiz.sobEncomenda = false;
+  this.style.outline = '3px solid var(--lilas)';
+  document.getElementById('wizTipoEncomenda').style.outline = 'none';
+  document.getElementById('wizCaixaEstoque').style.display = 'block';
+};
+document.getElementById('wizTipoEncomenda').onclick = function(){
+  wiz.sobEncomenda = true;
+  this.style.outline = '3px solid var(--lilas)';
+  document.getElementById('wizTipoEstoque').style.outline = 'none';
+  document.getElementById('wizCaixaEstoque').style.display = 'none';
+};
 
 // Conta de lucro AO VIVO no passo 3
 function atualizarCalcLucro(){
@@ -1147,7 +1254,10 @@ function validarPasso(n){
     if(!wiz.emoji){ toast('Escolham um emoji fofo! 😊'); return false; }
   }
   if(n === 2){
-    wiz.categoria = document.getElementById('wizCategoria').value.trim();
+    const selCat = document.getElementById('wizCategoriaSel').value;
+    wiz.categoria = selCat === '__nova__'
+      ? document.getElementById('wizCategoriaNova').value.trim()
+      : selCat;
     if(!wiz.categoria){ toast('Qual a categoria? 🤗'); return false; }
     if(!wiz.cor){ toast('Escolham uma cor pro card! 🎨'); return false; }
     // Foto e descrição são opcionais — aceita link https:// ou foto do aparelho (data:image)
@@ -1169,9 +1279,13 @@ function validarPasso(n){
     }
   }
   if(n === 4){
-    wiz.estoque = parseInt(document.getElementById('wizEstoque').value);
     wiz.desconto = parseInt(document.getElementById('wizDesconto').value) || 0;
-    if(isNaN(wiz.estoque) || wiz.estoque < 1){ toast('Quantas unidades vocês têm? 🤗'); return false; }
+    if(wiz.sobEncomenda){
+      wiz.estoque = 0; // sob encomenda: sem estoque em casa, compra depois do pedido ✨
+    }else{
+      wiz.estoque = parseInt(document.getElementById('wizEstoque').value);
+      if(isNaN(wiz.estoque) || wiz.estoque < 1){ toast('Quantas unidades vocês têm? 🤗'); return false; }
+    }
     if(wiz.desconto < 0 || wiz.desconto > 90){ toast('Desconto só vale de 0 a 90%! 😅'); return false; }
   }
   return true;
@@ -1196,7 +1310,9 @@ function montarResumoWizard(){
         '<div class="v"><b>' + formatarPreco(precoComDesconto(wiz)) + (wiz.desconto>0?' (-'+wiz.desconto+'%)':'') + '</b><span>Venda 🏷️</span></div>' +
         '<div class="v"><b style="color:var(--verde)">' + formatarPreco(lucro) + '</b><span>Lucro (' + margem + '%) 💰</span></div>' +
       '</div>' +
-      '<p>📦 ' + wiz.estoque + ' unidades na prateleira</p>' +
+      (wiz.sobEncomenda
+        ? '<p>✨ Sob encomenda — vocês compram quando a cliente pedir!</p>'
+        : '<p>📦 ' + wiz.estoque + ' unidades na prateleira</p>') +
     '</div>';
 }
 
@@ -1216,6 +1332,7 @@ document.getElementById('wizAvancar').onclick = ()=>{
     precoVenda: wiz.precoVenda,
     desconto: wiz.desconto,
     estoque: wiz.estoque,
+    sobEncomenda: !!wiz.sobEncomenda, // ✨ sem estoque em casa: compra depois do pedido
     cor: wiz.cor,
     status: 'disponivel',
     vendas: 0,
@@ -1230,8 +1347,14 @@ document.getElementById('wizAvancar').onclick = ()=>{
   lunaDiz('Se comprou por R$10 e vende por R$25, seu lucro é R$15 — margem de 150%! 📈');
   // Limpa o wizard pra próxima vez
   wiz = {};
+  wiz.sobEncomenda = false;
   document.getElementById('wizNome').value = '';
-  document.getElementById('wizCategoria').value = '';
+  document.getElementById('wizCategoriaSel').value = '';
+  document.getElementById('wizCategoriaNova').value = '';
+  document.getElementById('wizCategoriaNova').style.display = 'none';
+  document.getElementById('wizCaixaEstoque').style.display = 'block';
+  document.getElementById('wizTipoEstoque').style.outline = '3px solid var(--lilas)';
+  document.getElementById('wizTipoEncomenda').style.outline = 'none';
   document.getElementById('wizFoto').value = '';
   document.getElementById('wizDescricao').value = '';
   document.getElementById('wizFotoPreview').innerHTML = '';
@@ -1250,8 +1373,13 @@ document.getElementById('wizAvancar').onclick = ()=>{
    ============================================================ */
 let carrinhoVenda = {}; // { idDoProduto: quantidade }
 
+// ✨ Sob encomenda pode vender sem estoque em casa (até 10 por venda)
+function limiteVenda(p){
+  return p.sobEncomenda ? 10 : p.estoque;
+}
+
 function renderVenda(){
-  const produtos = lerProdutos().filter(p=> p.status === 'disponivel' && p.estoque > 0);
+  const produtos = lerProdutos().filter(p=> p.status === 'disponivel' && (p.estoque > 0 || p.sobEncomenda));
   const caixa = document.getElementById('vendaProdutos');
   caixa.innerHTML = '';
   if(produtos.length === 0){
@@ -1268,7 +1396,7 @@ function renderVenda(){
       '</div>' +
       '<div style="min-width:0">' +
         '<div style="font-weight:800;font-size:15px;line-height:1.2">' + p.nome + '</div>' +
-        '<div style="font-size:13px;color:var(--texto-suave);font-weight:600">' + formatarPreco(precoComDesconto(p)) + ' • ' + p.estoque + ' un</div>' +
+        '<div style="font-size:13px;color:var(--texto-suave);font-weight:600">' + formatarPreco(precoComDesconto(p)) + ' • ' + (p.sobEncomenda ? '✨ sob encomenda' : p.estoque + ' un') + '</div>' +
       '</div>' +
       '<div class="qtd-ctl">' +
         '<button type="button" aria-label="Tirar um">−</button>' +
@@ -1284,11 +1412,13 @@ function renderVenda(){
       }
     };
     btnMais.onclick = ()=>{
-      if((carrinhoVenda[p.id]||0) < p.estoque){
+      if((carrinhoVenda[p.id]||0) < limiteVenda(p)){
         carrinhoVenda[p.id] = (carrinhoVenda[p.id]||0) + 1;
         renderVenda();
       }else{
-        toast('Só tem ' + p.estoque + ' unidades de "' + p.nome + '"! 😅');
+        toast(p.sobEncomenda
+          ? 'Máximo de 10 por venda de "' + p.nome + '"! 😅'
+          : 'Só tem ' + p.estoque + ' unidades de "' + p.nome + '"! 😅');
       }
     };
     caixa.appendChild(item);
@@ -1330,20 +1460,26 @@ document.getElementById('btnConfirmarVenda').onclick = ()=>{
   const { total, lucro } = calcularVenda();
 
   // Monta a lista de itens da venda e dá baixa no estoque
+  // (✨ sob encomenda: NÃO mexe no estoque — a compra nasce no Cofrinho!)
   const itensVenda = [];
+  const itensEncomenda = [];
   let zerouAlgum = false;
   itens.forEach(id=>{
     const p = produtos.find(x=> x.id == id);
     if(!p) return;
     const qtd = carrinhoVenda[id];
     let unit = Math.round(precoComDesconto(p) * (100 - descExtra) / 100);
-    itensVenda.push({ produtoId: p.id, nome: p.nome, emoji: p.emoji, qtd: qtd, precoUnit: unit, custoUnit: p.custo, desconto: (p.desconto||0) + descExtra });
-    p.estoque -= qtd;
+    itensVenda.push({ produtoId: p.id, nome: p.nome, emoji: p.emoji, qtd: qtd, precoUnit: unit, custoUnit: p.custo, desconto: (p.desconto||0) + descExtra, encomenda: !!p.sobEncomenda });
     p.vendas = (p.vendas||0) + qtd;
-    if(p.estoque <= 0){
-      p.estoque = 0;
-      p.status = 'esgotado'; // zerou → esgotado → Troca Rápida aparece na aba Produtos!
-      zerouAlgum = true;
+    if(p.sobEncomenda){
+      itensEncomenda.push({ nome: p.nome, qtd: qtd, custo: p.custo });
+    }else{
+      p.estoque -= qtd;
+      if(p.estoque <= 0){
+        p.estoque = 0;
+        p.status = 'esgotado'; // zerou → esgotado → Troca Rápida aparece na aba Produtos!
+        zerouAlgum = true;
+      }
     }
   });
   salvarProdutos(produtos);
@@ -1355,9 +1491,27 @@ document.getElementById('btnConfirmarVenda').onclick = ()=>{
 
   gravarLog('💰 Vendeu!', itensVenda.map(i=> i.qtd + 'x ' + i.nome).join(', ') + ' = ' + formatarPreco(total));
 
+  // ✨ MÁGICA DA ENCOMENDA: a venda vira ordem de compra no Cofrinho!
+  if(itensEncomenda.length > 0){
+    const compras = lerCompras();
+    compras.unshift({
+      id: Date.now() + 1,
+      data: new Date().toISOString(),
+      descricao: 'Pedido: ' + itensEncomenda.map(i=> i.qtd + 'x ' + i.nome).join(', '),
+      valor: itensEncomenda.reduce((s,i)=> s + i.custo * i.qtd, 0),
+      status: 'pendente',
+      origem: 'encomenda'
+    });
+    salvarCompras(compras);
+    gravarLog('🛒 Compra pendente!', 'Buscar: ' + itensEncomenda.map(i=> i.qtd + 'x ' + i.nome).join(', '));
+  }
+
   // Festa! 🎉
   soltarConfete(80);
   toast('Cha-ching! 💰 ' + formatarPreco(lucro) + ' de lucro!');
+  if(itensEncomenda.length > 0){
+    setTimeout(()=> toast('✨ Encomenda registrada! A compra está no 💎 Cofrinho, nas "pendentes"!'), 3000);
+  }
 
   // Luna comemora a 1ª venda do dia
   const hoje = new Date().toDateString();
@@ -1412,7 +1566,7 @@ function desfazerVenda(idVenda){
     venda.itens.forEach(item=>{
       const p = produtos.find(x=> x.id === item.produtoId);
       if(p && p.status !== 'removido'){
-        p.estoque += item.qtd; // devolve as unidades
+        if(!p.sobEncomenda) p.estoque += item.qtd; // devolve as unidades (encomenda não tem estoque!)
         p.vendas = Math.max(0, (p.vendas||0) - item.qtd);
         if(p.status === 'esgotado' && p.estoque > 0) p.status = 'disponivel';
       }
@@ -1426,6 +1580,163 @@ function desfazerVenda(idVenda){
     toast('Venda desfeita! Estoque devolvido 📦');
   };
 }
+
+/* ============================================================
+   💎 ABA COFRINHO — aportes das sócias + frente de aquisição!
+   Caixinha da loja = aportes + vendas − compras
+   ============================================================ */
+function dataBonita(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderCofrinho(){
+  const aportes = lerAportes();
+  const compras = lerCompras();
+  const vendas = lerVendas();
+
+  const totalAportes = aportes.reduce((s,a)=> s + (a.valor||0), 0);
+  const totalCompras = compras.reduce((s,c)=> s + (c.valor||0), 0);
+  const receitaVendas = vendas.reduce((s,v)=> s + (v.total||0), 0);
+  const caixinha = totalAportes + receitaVendas - totalCompras;
+  const pendentes = compras.filter(c=> c.status === 'pendente');
+
+  // Aportes por sócia — a base da divisão justa! 🤝
+  const porSocia = {};
+  aportes.forEach(a=>{ porSocia[a.socia] = (porSocia[a.socia]||0) + (a.valor||0); });
+  const resumoSocias = ['Sócia 1','Sócia 2','Sócia 3']
+    .map(s=> s + ': ' + formatarPreco(porSocia[s]||0)).join(' • ');
+
+  document.getElementById('resumoCofrinho').innerHTML =
+    '<div class="resumo-item"><div class="num" style="color:' + (caixinha >= 0 ? 'var(--verde)' : 'var(--coral)') + '">' + formatarPreco(caixinha) + '</div><div class="rot">Caixinha da loja 💜</div></div>' +
+    '<div class="resumo-item"><div class="num" style="color:var(--lilas)">' + formatarPreco(totalAportes) + '</div><div class="rot">Aportes 💎</div></div>' +
+    '<div class="resumo-item"><div class="num" style="color:var(--coral)">' + formatarPreco(totalCompras) + '</div><div class="rot">Compras 🛒</div></div>' +
+    '<div class="resumo-item"><div class="num" style="color:' + (pendentes.length ? '#F59E0B' : 'var(--verde)') + '">' + pendentes.length + '</div><div class="rot">Pendentes ⏰</div></div>' +
+    '<div class="resumo-item" style="grid-column:1/-1"><div class="rot" style="font-size:13px">💎 ' + resumoSocias + '</div></div>';
+
+  // ⏰ Pendentes (encomendas pra buscar!)
+  const caixaPend = document.getElementById('listaPendentes');
+  if(pendentes.length === 0){
+    caixaPend.innerHTML = '<div class="cartao" style="text-align:center">Nenhuma compra pendente! Tudo em dia ✅</div>';
+  }else{
+    caixaPend.innerHTML = '';
+    pendentes.forEach(c=>{
+      const div = document.createElement('div');
+      div.className = 'hist-venda';
+      div.innerHTML =
+        '<div style="min-width:0">' +
+          '<div style="font-weight:800;font-size:14px">⏰ ' + c.descricao + '</div>' +
+          '<small>' + dataBonita(c.data) + ' • custo estimado ' + formatarPreco(c.valor||0) + '</small>' +
+        '</div>' +
+        '<button type="button">✅ Recebida!</button>';
+      div.querySelector('button').onclick = ()=>{
+        const todas = lerCompras();
+        const alvo = todas.find(x=> x.id === c.id);
+        if(alvo) alvo.status = 'recebida';
+        salvarCompras(todas);
+        gravarLog('✅ Compra recebida', c.descricao);
+        toast('Encomenda em mãos! Bora entregar! 🛵💜');
+        renderTudo();
+      };
+      caixaPend.appendChild(div);
+    });
+  }
+
+  // 💎 Lista de aportes (10 mais novos, com 🗑️ pra corrigir erro)
+  const caixaApo = document.getElementById('listaAportes');
+  if(aportes.length === 0){
+    caixaApo.innerHTML = '<div class="cartao" style="text-align:center">Nenhum aporte ainda. O primeiro é histórico! 🌱</div>';
+  }else{
+    caixaApo.innerHTML = '';
+    aportes.slice(0, 10).forEach(a=>{
+      const div = document.createElement('div');
+      div.className = 'hist-venda';
+      div.innerHTML =
+        '<div style="min-width:0">' +
+          '<div style="font-weight:800;font-size:14px">💎 ' + a.socia + ' aportou ' + formatarPreco(a.valor||0) + '</div>' +
+          '<small>' + dataBonita(a.data) + (a.obs ? ' • ' + a.obs : '') + '</small>' +
+        '</div>' +
+        '<button type="button">🗑️</button>';
+      div.querySelector('button').onclick = ()=> apagarRegistroCofrinho('aporte', a.id);
+      caixaApo.appendChild(div);
+    });
+  }
+
+  // 🛒 Lista de compras (10 mais novas, com 🗑️)
+  const caixaCom = document.getElementById('listaCompras');
+  if(compras.length === 0){
+    caixaCom.innerHTML = '<div class="cartao" style="text-align:center">Nenhuma compra registrada ainda 🌱</div>';
+  }else{
+    caixaCom.innerHTML = '';
+    compras.slice(0, 10).forEach(c=>{
+      const div = document.createElement('div');
+      div.className = 'hist-venda';
+      div.innerHTML =
+        '<div style="min-width:0">' +
+          '<div style="font-weight:800;font-size:14px">' + (c.status === 'pendente' ? '⏰' : '🛒') + ' ' + c.descricao + ' — ' + formatarPreco(c.valor||0) + '</div>' +
+          '<small>' + dataBonita(c.data) + ' • ' + (c.status === 'pendente' ? 'pendente' : 'recebida') + (c.origem === 'encomenda' ? ' • de encomenda ✨' : '') + '</small>' +
+        '</div>' +
+        '<button type="button">🗑️</button>';
+      div.querySelector('button').onclick = ()=> apagarRegistroCofrinho('compra', c.id);
+      caixaCom.appendChild(div);
+    });
+  }
+}
+
+// 🗑️ Apaga um registro errado (com confirmação gentil)
+function apagarRegistroCofrinho(tipo, id){
+  abrirModal(
+    '<h3>🗑️ Apagar esse registro?</h3>' +
+    '<p style="color:var(--texto-suave);font-weight:600">Só usem se anotaram errado, combinado?</p>' +
+    '<div class="modal-botoes">' +
+      '<button class="btn-cinza" onclick="fecharModal()">Cancelar</button>' +
+      '<button class="btn-lilas" id="okApagarReg">🗑️ Apagar</button>' +
+    '</div>'
+  );
+  document.getElementById('okApagarReg').onclick = ()=>{
+    if(tipo === 'aporte') salvarAportes(lerAportes().filter(a=> a.id !== id));
+    else salvarCompras(lerCompras().filter(c=> c.id !== id));
+    gravarLog('🗑️ Apagou registro', tipo + ' #' + id);
+    fecharModal();
+    renderTudo();
+    toast('Registro apagado!');
+  };
+}
+
+// 💎 Registrar aporte (dinheiro que uma sócia coloca na loja)
+document.getElementById('btnAporte').onclick = ()=>{
+  const socia = document.getElementById('apoSocia').value;
+  const valor = paraCentavos(document.getElementById('apoValor').value);
+  const obs = document.getElementById('apoObs').value.trim();
+  if(valor === null || valor <= 0){ toast('Quanto ela está aportando? 🤗'); return; }
+  const aportes = lerAportes();
+  aportes.unshift({ id: Date.now(), data: new Date().toISOString(), socia: socia, valor: valor, obs: obs });
+  salvarAportes(aportes);
+  gravarLog('💎 Aporte!', socia + ' colocou ' + formatarPreco(valor) + (obs ? ' (' + obs + ')' : ''));
+  soltarConfete(60);
+  toast('Aporte registrado! A loja agradece! 💎💜');
+  lunaDiz('Anotar cada aporte é o segredo da divisão justa de lucros no futuro! 🤝');
+  document.getElementById('apoValor').value = '';
+  document.getElementById('apoObs').value = '';
+  renderTudo();
+};
+
+// 🛒 Registrar compra da loja (aquisição: reposição ou encomenda)
+document.getElementById('btnCompra').onclick = ()=>{
+  const desc = document.getElementById('comDesc').value.trim();
+  const valor = paraCentavos(document.getElementById('comValor').value);
+  if(!desc){ toast('O que a loja comprou? 🤗'); return; }
+  if(valor === null || valor <= 0){ toast('Quanto a loja pagou? 🤗'); return; }
+  const compras = lerCompras();
+  compras.unshift({ id: Date.now(), data: new Date().toISOString(), descricao: desc, valor: valor, status: 'recebida', origem: 'livre' });
+  salvarCompras(compras);
+  gravarLog('🛒 Compra da loja', desc + ' = ' + formatarPreco(valor));
+  soltarConfete(40);
+  toast('Compra registrada! Caixinha atualizada 🛒');
+  document.getElementById('comDesc').value = '';
+  document.getElementById('comValor').value = '';
+  renderTudo();
+};
 
 /* ============================================================
    📜 ABA LOG — o diário da loja
@@ -1556,6 +1867,8 @@ function temNuvem(){ return /^https:\/\/script\.google(macros)?\.com\//.test(url
 const salvarProdutosLocal = salvarProdutos;
 const salvarVendasLocal = salvarVendas;
 const salvarConfigLocal = salvarConfig;
+const salvarAportesLocal = salvarAportes;
+const salvarComprasLocal = salvarCompras;
 
 // Manda TUDO pra nuvem (POST text/plain de propósito: passa liso pelo CORS!)
 function enviarTudoParaNuvem(){
@@ -1571,7 +1884,9 @@ function enviarTudoParaNuvem(){
     produtos: lerProdutos(),
     vendas: lerVendas(),
     config: cfg,
-    log: logLocal
+    log: logLocal,
+    aportes: lerAportes(),
+    compras: lerCompras()
   };
   fetch(urlNuvem(), {
     method: 'POST',
@@ -1593,6 +1908,8 @@ function enviarTudoParaNuvem(){
 salvarProdutos = function(lista){ salvarProdutosLocal(lista); enviarTudoParaNuvem(); };
 salvarVendas = function(v){ salvarVendasLocal(v); enviarTudoParaNuvem(); };
 salvarConfig = function(cfg){ salvarConfigLocal(cfg); enviarTudoParaNuvem(); };
+salvarAportes = function(lista){ salvarAportesLocal(lista); enviarTudoParaNuvem(); };
+salvarCompras = function(lista){ salvarComprasLocal(lista); enviarTudoParaNuvem(); };
 
 // Puxa os dados da nuvem. Nuvem vazia + loja cheia = MIGRAÇÃO AUTOMÁTICA! 🌱
 function puxarDaNuvem(depois){
@@ -1613,8 +1930,20 @@ function puxarDaNuvem(depois){
 
       // Nuvem mais nova que o aparelho? Adota os dados dela!
       if((d.atualizadoEm || 0) > (cfgLocal.atualizadoEm || 0)){
-        salvarProdutosLocal(d.produtos || []);
+        const produtosNuvem = d.produtos || [];
+        // ✨ preserva "sob encomenda" se a nuvem ainda não conhece a bandeira
+        const locais = lerProdutos();
+        produtosNuvem.forEach(pn=>{
+          if(pn.sobEncomenda === undefined){
+            const pl = locais.find(x=> x.id === pn.id);
+            if(pl && pl.sobEncomenda) pn.sobEncomenda = true;
+          }
+        });
+        salvarProdutosLocal(produtosNuvem);
         salvarVendasLocal(d.vendas || []);
+        // Aportes e compras: só adota se a nuvem MANDOU (senão, mantém os locais!)
+        if(d.aportes !== undefined) salvarAportesLocal(d.aportes);
+        if(d.compras !== undefined) salvarComprasLocal(d.compras);
         const cfgNova = d.config || {};
         cfgNova.linkNuvem = cfgLocal.linkNuvem; // o link mora no aparelho!
         cfgNova.atualizadoEm = d.atualizadoEm;
@@ -1704,9 +2033,10 @@ function renderTudo(){
   renderProdutos();
   renderVenda();
   renderHistoricoVendas();
+  renderCofrinho();
   renderLog();
   renderConfig();
-  atualizarCategorias();
+  montarSelectCategorias();
 }
 
 // Quando a página abre...
