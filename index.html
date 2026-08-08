@@ -260,8 +260,23 @@ header .frase{font-size:16px;opacity:.95;margin-top:2px;}
   font-size:90px;
   overflow:hidden;
   border-radius:var(--raio) var(--raio) 0 0;
+  position:relative; /* palco do efeito fundo-desfocado */
 }
-.modal-foto img{width:100%;height:100%;object-fit:cover;display:block;}
+/* ✨ Foto dos detalhes: o produto aparece INTEIRO e centralizado;
+   o fundo é a própria foto desfocada (igual às lojas grandes!) */
+.modal-foto .foto-fundo{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  filter:blur(18px) brightness(1.08);
+  transform:scale(1.25); /* esconde as bordinhas do blur */
+}
+.modal-foto .foto-frente{
+  position:relative;z-index:1;
+  width:100%;height:100%;
+  object-fit:contain; /* nada de corte: a foto inteirinha! */
+  display:block;
+}
 .modal-fechar{
   position:absolute;
   top:10px;right:10px;
@@ -1011,6 +1026,15 @@ function fotoProdutoHTML(p){
   return p.emoji;
 }
 
+// ✨ Foto dos DETALHES: produto inteiro e centralizado, com o fundo
+// desfocado da própria foto (igual às lojas grandes!). Sem corte feio!
+function fotoModalHTML(p){
+  if(!p.foto) return p.emoji;
+  return '<img class="foto-fundo" src="' + p.foto + '" alt="" aria-hidden="true" onerror="this.remove()">' +
+         '<img class="foto-frente" src="' + p.foto + '" alt="' + p.nome + '" ' +
+         'data-emoji="' + p.emoji + '" onerror="this.outerHTML=this.dataset.emoji">';
+}
+
 // ------------------------------------------------------------
 // MODAL DE DETALHES 🔍 — tocou no produto, ele conta tudo!
 // ------------------------------------------------------------
@@ -1032,7 +1056,7 @@ function abrirDetalhes(id){
   const caixa = document.getElementById("modal-caixa");
   caixa.innerHTML =
     '<button class="modal-fechar" id="modal-btn-fechar" aria-label="Fechar detalhes">✖️</button>' +
-    '<div class="modal-foto" style="background:' + p.cor + ';">' + fotoProdutoHTML(p) + '</div>' +
+    '<div class="modal-foto" style="background:' + p.cor + ';">' + fotoModalHTML(p) + '</div>' +
     '<div class="modal-corpo">' +
       '<div class="modal-nome">' + p.nome + ' ' + p.emoji + '</div>' +
       '<div class="modal-categoria">' + p.categoria + '</div>' +

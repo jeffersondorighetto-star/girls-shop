@@ -64,7 +64,7 @@ Produto **sob encomenda** é oferecido na vitrine **sem estoque em casa**: a loj
 **Aporte** = dinheiro que uma sócia coloca do próprio bolso na loja para financiar compras. As sócias aportam em **momentos e valores diferentes** — e é exatamente por isso que o registro é indispensável.
 
 1. Painel → **💎 Cofrinho → Registrar Aporte**.
-2. Selecionar **quem** aportou (Sócia 1, 2 ou 3), **quanto** (R$) e, opcionalmente, a **finalidade** (ex.: "repor glosses").
+2. Selecionar **quem** aportou (Valentina, Alice ou Helena), **quanto** (R$) e, opcionalmente, a **finalidade** (ex.: "repor glosses").
 3. **💎 Registrar aporte.** Confere no resumo: o total por sócia aparece no topo do Cofrinho e no Placar.
 
 > 🤝 **Por que isso importa:** quem aporta mais, investe mais. O histórico de aportes por sócia é a **base objetiva** para acordos futuros de divisão de lucros e de decisões de reinvestimento. Sem registro, vira disputa de memória.

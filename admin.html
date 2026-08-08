@@ -341,9 +341,9 @@ label{font-weight:700;display:block;margin:10px 0 4px}
       <p style="color:var(--texto-suave);font-weight:600">Aporte é quando uma sócia coloca dinheiro do próprio bolso na loja (pra comprar produtos). Anotar direitinho = divisão justa no futuro! 🤝</p>
       <label>👧 Quem está aportando?</label>
       <select id="apoSocia" style="width:100%;padding:12px;border-radius:14px;border:2px solid #E9D5FF;font-size:16px;font-weight:700;background:#fff">
-        <option>Sócia 1</option>
-        <option>Sócia 2</option>
-        <option>Sócia 3</option>
+        <option>Valentina</option>
+        <option>Alice</option>
+        <option>Helena</option>
       </select>
       <label>💵 Quanto? (R$)</label>
       <input type="number" id="apoValor" placeholder="Ex: 30,00" min="0" step="0.01" inputmode="decimal">
@@ -396,11 +396,11 @@ label{font-weight:700;display:block;margin:10px 0 4px}
       <p id="statusNuvem" style="font-size:14px;color:var(--texto-suave);margin-top:4px"></p>
       <label>🎯 Meta de lucro do mês (R$)</label>
       <input type="number" id="cfgMeta" min="0" step="0.01" inputmode="decimal">
-      <label>🎂 Aniversário da sócia 1 (DD/MM)</label>
+      <label>🎂 Aniversário da Valentina (DD/MM)</label>
       <input type="text" id="cfgNiver1" placeholder="Ex: 15/03" maxlength="5" inputmode="numeric">
-      <label>🎂 Aniversário da sócia 2 (DD/MM)</label>
+      <label>🎂 Aniversário da Alice (DD/MM)</label>
       <input type="text" id="cfgNiver2" placeholder="Ex: 22/07" maxlength="5" inputmode="numeric">
-      <label>🎂 Aniversário da sócia 3 (DD/MM)</label>
+      <label>🎂 Aniversário da Helena (DD/MM)</label>
       <input type="text" id="cfgNiver3" placeholder="Ex: 08/11" maxlength="5" inputmode="numeric">
       <button class="btn-lilas" style="width:100%;margin-top:14px;padding:12px" id="btnSalvarCfg">💾 Salvar configurações</button>
     </div>
@@ -1585,6 +1585,22 @@ function desfazerVenda(idVenda){
    💎 ABA COFRINHO — aportes das sócias + frente de aquisição!
    Caixinha da loja = aportes + vendas − compras
    ============================================================ */
+// 👑 AS SÓCIAS — nomes de verdade! O avatar é a inicial colorida; se existir
+// o arquivo avatares/nome.jpg, a foto aparece sozinha (mágica do onerror!).
+const SOCIAS = ['Valentina','Alice','Helena'];
+function nomeSocia(s){
+  const mapa = { 'Sócia 1':'Valentina', 'Sócia 2':'Alice', 'Sócia 3':'Helena' };
+  return mapa[s] || s;
+}
+function avatarSocia(nome, tam){
+  nome = nomeSocia(nome);
+  tam = tam || 40;
+  const cores = { 'Valentina':'linear-gradient(135deg,#F9A8D4,#EC4899)', 'Alice':'linear-gradient(135deg,#C4B5FD,#8B5CF6)', 'Helena':'linear-gradient(135deg,#FDE68A,#F59E0B)' };
+  return '<span style="width:' + tam + 'px;height:' + tam + 'px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:' + Math.round(tam*0.42) + 'px;background:' + (cores[nome] || 'linear-gradient(135deg,#DDD6FE,#A78BFA)') + ';overflow:hidden;flex:0 0 ' + tam + 'px;vertical-align:middle">' +
+    '<img src="avatares/' + nome.toLowerCase() + '.jpg" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()">' +
+    nome.charAt(0) + '</span>';
+}
+
 function dataBonita(iso){
   const d = new Date(iso);
   return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -1603,9 +1619,9 @@ function renderCofrinho(){
 
   // Aportes por sócia — a base da divisão justa! 🤝
   const porSocia = {};
-  aportes.forEach(a=>{ porSocia[a.socia] = (porSocia[a.socia]||0) + (a.valor||0); });
-  const resumoSocias = ['Sócia 1','Sócia 2','Sócia 3']
-    .map(s=> s + ': ' + formatarPreco(porSocia[s]||0)).join(' • ');
+  aportes.forEach(a=>{ const s = nomeSocia(a.socia); porSocia[s] = (porSocia[s]||0) + (a.valor||0); });
+  const resumoSocias = SOCIAS
+    .map(s=> avatarSocia(s, 26) + ' ' + s + ': ' + formatarPreco(porSocia[s]||0)).join(' &nbsp; ');
 
   document.getElementById('resumoCofrinho').innerHTML =
     '<div class="resumo-item"><div class="num" style="color:' + (caixinha >= 0 ? 'var(--verde)' : 'var(--coral)') + '">' + formatarPreco(caixinha) + '</div><div class="rot">Caixinha da loja 💜</div></div>' +
@@ -1653,7 +1669,7 @@ function renderCofrinho(){
       div.className = 'hist-venda';
       div.innerHTML =
         '<div style="min-width:0">' +
-          '<div style="font-weight:800;font-size:14px">💎 ' + a.socia + ' aportou ' + formatarPreco(a.valor||0) + '</div>' +
+          '<div style="font-weight:800;font-size:14px">💎 ' + avatarSocia(a.socia, 26) + ' ' + nomeSocia(a.socia) + ' aportou ' + formatarPreco(a.valor||0) + '</div>' +
           '<small>' + dataBonita(a.data) + (a.obs ? ' • ' + a.obs : '') + '</small>' +
         '</div>' +
         '<button type="button">🗑️</button>';

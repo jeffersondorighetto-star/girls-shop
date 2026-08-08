@@ -477,6 +477,22 @@ function lerCompras(){
   }catch(e){ return []; }
 }
 
+// 👑 AS SÓCIAS — nomes de verdade! O avatar é a inicial colorida; se existir
+// o arquivo avatares/nome.jpg, a foto aparece sozinha (mágica do onerror!).
+const SOCIAS = ['Valentina','Alice','Helena'];
+function nomeSocia(s){
+  const mapa = { 'Sócia 1':'Valentina', 'Sócia 2':'Alice', 'Sócia 3':'Helena' };
+  return mapa[s] || s;
+}
+function avatarSocia(nome, tam){
+  nome = nomeSocia(nome);
+  tam = tam || 40;
+  const cores = { 'Valentina':'linear-gradient(135deg,#F9A8D4,#EC4899)', 'Alice':'linear-gradient(135deg,#C4B5FD,#8B5CF6)', 'Helena':'linear-gradient(135deg,#FDE68A,#F59E0B)' };
+  return '<span style="width:' + tam + 'px;height:' + tam + 'px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:' + Math.round(tam*0.42) + 'px;background:' + (cores[nome] || 'linear-gradient(135deg,#DDD6FE,#A78BFA)') + ';overflow:hidden;flex:0 0 ' + tam + 'px;vertical-align:middle">' +
+    '<img src="avatares/' + nome.toLowerCase() + '.jpg" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()">' +
+    nome.charAt(0) + '</span>';
+}
+
 // Mostra um erro gentil no topo
 function mostrarErro(msg){
   document.getElementById('avisoErro').innerHTML =
@@ -847,9 +863,9 @@ function desenharCofrinho(){
 
   // Aportes por sócia (base da divisão justa de lucros!)
   const porSocia = {};
-  aportes.forEach(a=>{ porSocia[a.socia] = (porSocia[a.socia]||0) + (a.valor||0); });
-  const chips = Object.keys(porSocia).sort().map(s=>
-    `<div class="card-num"><div class="icone">👧</div><div class="valor">${formatarPreco(porSocia[s])}</div><div class="rotulo">${s} aportou</div></div>`
+  aportes.forEach(a=>{ const s = nomeSocia(a.socia); porSocia[s] = (porSocia[s]||0) + (a.valor||0); });
+  const chips = SOCIAS.filter(s=> porSocia[s] !== undefined).map(s=>
+    `<div class="card-num"><div class="icone">${avatarSocia(s, 34)}</div><div class="valor">${formatarPreco(porSocia[s])}</div><div class="rotulo">${s} aportou</div></div>`
   ).join('');
 
   let html = `

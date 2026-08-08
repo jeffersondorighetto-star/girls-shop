@@ -333,7 +333,7 @@ function montarAbaAportes(aba) {
   aba.setColumnWidth(5, 240);
   aba.getRange('D2:D1000').setNumberFormat('R$ #,##0.00');
   const regraSocia = SpreadsheetApp.newDataValidation()
-    .requireValueInList(['Sócia 1','Sócia 2','Sócia 3'], true)
+    .requireValueInList(['Valentina','Alice','Helena'], true)
     .setAllowInvalid(true).build();
   aba.getRange('C2:C1000').setDataValidation(regraSocia);
   aba.getRange('A1').setNote('💎 Cada linha é um aporte: dinheiro que uma sócia colocou do próprio bolso na loja. O admin registra e a planilha anota — é a base pra divisão justa dos lucros! 🤝');

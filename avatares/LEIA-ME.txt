@@ -1,0 +1,23 @@
+👑 PASTA DOS AVATARES DAS SÓCIAS
+================================
+
+Coloquem aqui as fotos das sócias, com ESTES nomes exatos:
+
+  💗 valentina.jpg   → avatar da Valentina (Sócia 1)
+  💜 alice.jpg       → avatar da Alice (Sócia 2)
+  💛 helena.jpg      → avatar da Helena (Sócia 3)
+
+Dicas pra foto ficar linda no círculo:
+  • Rosto centralizado, foto quadrada ou quase quadrada
+  • Boa luz (perto da janela fica ótimo!)
+  • Fundo limpo ajuda o rosto a se destacar
+
+Como funciona a mágica:
+  Enquanto a foto não existir, o site mostra a INICIAL colorida
+  da sócia (V, A, H). Quando o arquivo chegar aqui e for pro
+  GitHub, a foto aparece SOZINHA no Painel e no Placar — sem
+  mexer em nenhuma linha de código! ✨
+
+⚠️ Privacidade: os avatares aparecem SOMENTE nos ambientes
+internos (Painel e Placar das sócias). A vitrine pública dos
+clientes não mostra foto nem nome das meninas.
