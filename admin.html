@@ -1598,8 +1598,8 @@ function avatarSocia(nome, tam){
   nome = nomeSocia(nome);
   tam = tam || 40;
   const cores = { 'Valentina':'linear-gradient(135deg,#F9A8D4,#EC4899)', 'Alice':'linear-gradient(135deg,#C4B5FD,#8B5CF6)', 'Helena':'linear-gradient(135deg,#FDE68A,#F59E0B)' };
-  return '<span style="width:' + tam + 'px;height:' + tam + 'px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:' + Math.round(tam*0.42) + 'px;background:' + (cores[nome] || 'linear-gradient(135deg,#DDD6FE,#A78BFA)') + ';overflow:hidden;flex:0 0 ' + tam + 'px;vertical-align:middle">' +
-    '<img src="avatares/' + nome.toLowerCase() + '.jpg" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()">' +
+  return '<span style="width:' + tam + 'px;height:' + tam + 'px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;position:relative;font-weight:900;color:#fff;font-size:' + Math.round(tam*0.42) + 'px;background:' + (cores[nome] || 'linear-gradient(135deg,#DDD6FE,#A78BFA)') + ';overflow:hidden;flex:0 0 ' + tam + 'px;vertical-align:middle">' +
+    '<img src="avatares/' + nome.toLowerCase() + '.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.remove()">' +
     nome.charAt(0) + '</span>';
 }
 

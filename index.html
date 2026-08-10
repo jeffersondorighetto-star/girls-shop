@@ -680,18 +680,42 @@ footer .aviso-fofo{
   header h1{font-size:36px;}
 }
 
-/* 👑 O time na vitrine — círculos das sócias (a foto entra sozinha quando existir!) */
-.time-vitrine{display:flex;align-items:center;justify-content:center;margin-top:12px;}
+/* 👑 O time na vitrine — trio assimétrico: cada sócia com seu tamanho,
+   sua inclinação e sua etiqueta de nome (a foto entra sozinha quando existir!) */
+.time-vitrine{display:flex;align-items:flex-end;justify-content:center;margin-top:16px;min-height:118px;}
+.socia-hero{display:flex;flex-direction:column;align-items:center;position:relative;}
+.socia-hero.socia-esq{transform:rotate(-7deg) translateY(6px);margin-right:-10px;}
+.socia-hero.socia-dir{transform:rotate(6deg) translateY(10px);margin-left:-10px;}
+.socia-hero.socia-meio{z-index:2;transform:translateY(-12px);}
 .mini-avatar{
-  width:42px;height:42px;border-radius:50%;
+  width:68px;height:68px;border-radius:50%;
   display:inline-flex;align-items:center;justify-content:center;
-  font-weight:900;color:#fff;font-size:17px;
-  overflow:hidden;border:2.5px solid rgba(255,255,255,.9);
-  box-shadow:0 2px 10px rgba(30,15,60,.28);
+  position:relative;
+  font-weight:900;color:#fff;font-size:25px;
+  overflow:hidden;border:3px solid rgba(255,255,255,.95);
+  box-shadow:0 4px 14px rgba(30,15,60,.32);
+  animation:flutuaAvatar 3.6s ease-in-out infinite;
 }
-.mini-avatar.mini-colada{margin-left:-10px;}
-.mini-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
-.time-nomes{margin-left:10px;font-weight:800;font-size:14px;color:rgba(255,255,255,.95);letter-spacing:.2px;}
+.socia-hero.socia-meio .mini-avatar{
+  width:84px;height:84px;font-size:31px;border-width:3.5px;
+  box-shadow:0 8px 22px rgba(30,15,60,.42);
+}
+.socia-hero.socia-esq .mini-avatar{animation-delay:.5s;}
+.socia-hero.socia-dir .mini-avatar{animation-delay:1s;}
+@keyframes flutuaAvatar{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.mini-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.socia-tag{
+  margin-top:7px;padding:3px 11px;border-radius:999px;
+  background:rgba(255,255,255,.93);color:#6D28D9;
+  font-size:11.5px;font-weight:900;letter-spacing:.3px;
+  box-shadow:0 2px 7px rgba(30,15,60,.25);white-space:nowrap;
+}
+.socia-hero.socia-meio .socia-tag{font-size:13px;background:#fff;}
+/* Telas maiores: trio ainda mais imponente */
+@media(min-width:700px){
+  .mini-avatar{width:78px;height:78px;font-size:29px;}
+  .socia-hero.socia-meio .mini-avatar{width:96px;height:96px;font-size:35px;}
+}
 </style>
 </head>
 <body>
@@ -703,10 +727,18 @@ footer .aviso-fofo{
   <h1 id="nome-loja">Girls Shop</h1>
   <p class="frase">Feito por jovens, para jovens! ✨</p>
   <div class="time-vitrine" title="As sócias! 💜">
-    <span class="mini-avatar" style="background:linear-gradient(135deg,#F9A8D4,#EC4899)"><img src="avatares/valentina.jpg" alt="Valentina" onerror="this.remove()">V</span>
-    <span class="mini-avatar mini-colada" style="background:linear-gradient(135deg,#C4B5FD,#8B5CF6)"><img src="avatares/alice.jpg" alt="Alice" onerror="this.remove()">A</span>
-    <span class="mini-avatar mini-colada" style="background:linear-gradient(135deg,#FDE68A,#F59E0B)"><img src="avatares/helena.jpg" alt="Helena" onerror="this.remove()">H</span>
-    <span class="time-nomes">Valentina • Alice • Helena</span>
+    <span class="socia-hero socia-esq">
+      <span class="mini-avatar" style="background:linear-gradient(135deg,#C4B5FD,#8B5CF6)"><img src="avatares/alice.jpg" alt="Alice" onerror="this.remove()">A</span>
+      <span class="socia-tag">Alice</span>
+    </span>
+    <span class="socia-hero socia-meio">
+      <span class="mini-avatar" style="background:linear-gradient(135deg,#F9A8D4,#EC4899)"><img src="avatares/valentina.jpg" alt="Valentina" onerror="this.remove()">V</span>
+      <span class="socia-tag">Valentina</span>
+    </span>
+    <span class="socia-hero socia-dir">
+      <span class="mini-avatar" style="background:linear-gradient(135deg,#FDE68A,#F59E0B)"><img src="avatares/helena.jpg" alt="Helena" onerror="this.remove()">H</span>
+      <span class="socia-tag">Helena</span>
+    </span>
   </div>
   <button class="btn-carrinho-topo" id="btn-carrinho-topo" aria-label="Abrir carrinho">
     🛒
