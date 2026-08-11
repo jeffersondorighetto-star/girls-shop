@@ -1814,6 +1814,12 @@ document.getElementById("campo-nome").addEventListener("input", desenharPedido);
   desenharProdutos();
   atualizarTudoCarrinho();
   puxarDaNuvem();                 // ☁️ busca novidades da Planilha Viva!
+
+  // 🔄 A vitrine se atualiza sozinha: a cada 60 segundinhos e sempre
+  // que a aba volta pro foco — o estoque fica fresquinho depois de
+  // cada venda das sócias! (leve: só redesenha se a nuvem mudou)
+  setInterval(function(){ if(!document.hidden) puxarDaNuvem(); }, 60000);
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden) puxarDaNuvem(); });
 })();
 </script>
 </body>

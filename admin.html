@@ -628,7 +628,7 @@ function carregarSeed(){
     { id: agora+11, nome:'Tiara de Pérolas',    emoji:'👑', categoria:'Cabelo',      custo:1000, precoVenda:2500, desconto:0,  estoque:5,  cor:GRADIENTES[1], status:'pausado',    vendas:1, descricao:'Dia de princesa? Essa tiara de pérolas transforma qualquer look 👑' },
     { id: agora+12, nome:'Chaveiro Pelúcia Mini', emoji:'🧸', categoria:'Acessórios', custo:550, precoVenda:1400, desconto:0,  estoque:6,  cor:GRADIENTES[7], status:'disponivel', vendas:4, descricao:'Um ursinho mini que vai com você pra todo lugar, pendurado na mochila!' }
   ];
-  salvarProdutos(produtosSeed);
+  salvarProdutosLocal(produtosSeed); // seed é local: quem sobe é a migração/auto-cura!
 
   // Vendas de exemplo espalhadas pelo mês (pro Dashboard abrir "vivo")
   const hoje = new Date();
@@ -645,11 +645,11 @@ function carregarSeed(){
     { id: agora+104, data: diasAtras(9,15), itens:[{produtoId:agora+12, nome:'Chaveiro Pelúcia Mini', emoji:'🧸', qtd:2, precoUnit:1400, custoUnit:550, desconto:0}], total:2800, lucro:1700 },
     { id: agora+105, data: diasAtras(12,17), itens:[{produtoId:agora+2, nome:'Scrunchie de Cetim', emoji:'🎀', qtd:1, precoUnit:1000, custoUnit:400, desconto:0}], total:1000, lucro:600 }
   ];
-  salvarVendas(vendasSeed);
+  salvarVendasLocal(vendasSeed); // idem: exemplo local, sem evento!
 
   cfg.seedCarregado = true;
   if(!cfg.pin) cfg.pin = '1234';
-  salvarConfig(cfg);
+  salvarConfigLocal(cfg);
   gravarLog('🌱 Começou tudo!', 'A loja ganhou os primeiros produtos de exemplo.');
 }
 
@@ -1657,6 +1657,7 @@ document.getElementById('btnConfirmarVenda').onclick = ()=>{
   // (✨ sob encomenda: NÃO mexe no estoque — a compra nasce no Cofrinho!)
   const itensVenda = [];
   const itensEncomenda = [];
+  const ajustesVenda = []; // 🛰️ as diferenças de estoque que a nuvem aplica COM TRAVA!
   let zerouAlgum = false;
   itens.forEach(id=>{
     const p = produtos.find(x=> x.id == id);
@@ -1669,12 +1670,17 @@ document.getElementById('btnConfirmarVenda').onclick = ()=>{
       const custoUnit = comps.reduce((s,c)=> s + (c.custo||0), 0);
       itensVenda.push({ produtoId: p.id, nome: p.nome, emoji: p.emoji, qtd: qtd, precoUnit: unit, custoUnit: custoUnit, desconto: descExtra, encomenda: false });
       p.vendas = (p.vendas||0) + qtd;
+      idsVendaEmCurso[p.id] = true;
+      ajustesVenda.push({ id: p.id, dEstoque: 0, dVendas: qtd });
       comps.forEach(c=>{
         c.vendas = (c.vendas||0) + qtd;
+        idsVendaEmCurso[c.id] = true;
         if(c.sobEncomenda){
           itensEncomenda.push({ nome: c.nome + ' (da caixinha 🎁)', qtd: qtd, custo: c.custo });
+          ajustesVenda.push({ id: c.id, dEstoque: 0, dVendas: qtd });
         }else{
           c.estoque -= qtd;
+          ajustesVenda.push({ id: c.id, dEstoque: -qtd, dVendas: qtd });
           if(c.estoque <= 0){
             c.estoque = 0;
             c.status = 'esgotado'; // zerou → Troca Rápida aparece na aba Produtos!
@@ -1686,10 +1692,13 @@ document.getElementById('btnConfirmarVenda').onclick = ()=>{
     }
     itensVenda.push({ produtoId: p.id, nome: p.nome, emoji: p.emoji, qtd: qtd, precoUnit: unit, custoUnit: p.custo, desconto: (p.desconto||0) + descExtra, encomenda: !!p.sobEncomenda });
     p.vendas = (p.vendas||0) + qtd;
+    idsVendaEmCurso[p.id] = true;
     if(p.sobEncomenda){
       itensEncomenda.push({ nome: p.nome, qtd: qtd, custo: p.custo });
+      ajustesVenda.push({ id: p.id, dEstoque: 0, dVendas: qtd });
     }else{
       p.estoque -= qtd;
+      ajustesVenda.push({ id: p.id, dEstoque: -qtd, dVendas: qtd });
       if(p.estoque <= 0){
         p.estoque = 0;
         p.status = 'esgotado'; // zerou → esgotado → Troca Rápida aparece na aba Produtos!
@@ -1704,8 +1713,14 @@ document.getElementById('btnConfirmarVenda').onclick = ()=>{
 
   // Grava a venda (o Dashboard lê daqui!)
   const vendas = lerVendas();
-  vendas.unshift({ id: Date.now(), data: new Date().toISOString(), itens: itensVenda, total: total, lucro: lucro });
+  const vendaNova = { id: Date.now(), data: new Date().toISOString(), itens: itensVenda, total: total, lucro: lucro };
+  vendas.unshift(vendaNova);
   salvarVendas(vendas);
+
+  // 🛰️ A venda vira EVENTO e sobe pra nuvem (estoque baixa com trava,
+  // sem atropelo mesmo se outra sócia vender no mesmo segundo!)
+  enfileirar({ acao:'venda', eventoId: novoEventoId('v'), venda: vendaNova, ajustes: ajustesVenda, compras: [] });
+  enviarFila();
 
   gravarLog('💰 Vendeu!', itensVenda.map(i=> i.qtd + 'x ' + i.nome).join(', ') + ' = ' + formatarPreco(total));
 
@@ -1781,19 +1796,27 @@ function desfazerVenda(idVenda){
     const venda = vendas.find(v=> v.id === idVenda);
     if(!venda){ fecharModal(); return; }
     const produtos = lerProdutos();
+    const ajustesDesfazer = []; // 🛰️ a devolução, por diferença, pra nuvem travada!
     venda.itens.forEach(item=>{
       const p = produtos.find(x=> x.id === item.produtoId);
       if(p && p.status !== 'removido'){
+        idsVendaEmCurso[p.id] = true;
         if(ehCombo(p)){
           // 🎁 Devolve 1 de cada produtinho da caixinha!
+          ajustesDesfazer.push({ id: p.id, dEstoque: 0, dVendas: -item.qtd });
           componentesDoCombo(p, produtos).forEach(c=>{
             if(c.status !== 'removido'){
               if(!c.sobEncomenda) c.estoque += item.qtd;
               c.vendas = Math.max(0, (c.vendas||0) - item.qtd);
               if(c.status === 'esgotado' && c.estoque > 0) c.status = 'disponivel';
+              idsVendaEmCurso[c.id] = true;
+              ajustesDesfazer.push({ id: c.id, dEstoque: c.sobEncomenda ? 0 : item.qtd, dVendas: -item.qtd });
             }
           });
-        }else if(!p.sobEncomenda) p.estoque += item.qtd; // devolve as unidades (encomenda não tem estoque!)
+        }else{
+          if(!p.sobEncomenda) p.estoque += item.qtd; // devolve as unidades (encomenda não tem estoque!)
+          ajustesDesfazer.push({ id: p.id, dEstoque: p.sobEncomenda ? 0 : item.qtd, dVendas: -item.qtd });
+        }
         p.vendas = Math.max(0, (p.vendas||0) - item.qtd);
         if(p.status === 'esgotado' && p.estoque > 0) p.status = 'disponivel';
       }
@@ -1801,6 +1824,9 @@ function desfazerVenda(idVenda){
     salvarProdutos(produtos);
     vendas = vendas.filter(v=> v.id !== idVenda); // apaga o registro
     salvarVendas(vendas);
+    // 🛰️ O desfazer também é evento: a nuvem apaga a venda e devolve o estoque!
+    enfileirar({ acao:'desfazerVenda', eventoId: novoEventoId('d'), vendaId: idVenda, ajustes: ajustesDesfazer });
+    enviarFila();
     gravarLog('↩️ Desfez venda', venda.itens.map(i=> i.qtd + 'x ' + i.nome).join(', '));
     fecharModal();
     renderTudo();
@@ -2247,8 +2273,8 @@ const salvarConfigLocal = salvarConfig;
 const salvarAportesLocal = salvarAportes;
 const salvarComprasLocal = salvarCompras;
 
-// Manda TUDO pra nuvem (POST text/plain de propósito: passa liso pelo CORS!)
-// comVoz=true → conta em voz alta o que aconteceu (botão "Sincronizar agora" 📢)
+// Manda TUDO pra nuvem de uma vez (POST text/plain de propósito: passa liso pelo CORS!)
+// Hoje em dia serve só pra 🌱 MIGRAÇÃO (nuvem zerada) — o dia a dia usa eventos!
 function enviarTudoParaNuvem(comVoz){
   if(!temNuvem()){ if(comVoz) toast('Sem nuvem configurada! ☁️'); return; }
   if(comVoz) toast('☁️ Enviando tudo pra nuvem...');
@@ -2272,10 +2298,12 @@ function enviarTudoParaNuvem(comVoz){
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(pacote)
   }).then(r=> r.json()).then(d=>{
+    if(d){ nuvemRespondeu = true; if(d.versao) versaoNuvem = d.versao; }
     if(d && d.ok){
       localStorage.removeItem('girlsShop_nuvemPendente');
       localStorage.removeItem('girlsShop_nuvemUltimoErro');
       localStorage.setItem('girlsShop_nuvemUltimaSync', String(Date.now()));
+      retratoProdutos = tirarRetrato(lerProdutos()); // a migração igualou tudo!
       if(comVoz) toast('☁️ Tudo na nuvem! Abra a planilha e veja! 🎉');
     }else{
       localStorage.setItem('girlsShop_nuvemPendente','1');
@@ -2292,42 +2320,159 @@ function enviarTudoParaNuvem(comVoz){
   });
 }
 
-// 🔄 Botão "Sincronizar agora": manda tudo pra nuvem com voz alta! 📢
-document.getElementById('btnSyncNuvem').onclick = ()=> enviarTudoParaNuvem(true);
+/* ============================================================
+   🛰️ SINCRONIA v4 — A FILA MÁGICA DE EVENTOS
+   Cada coisa que as sócias fazem vira um "evento" (uma vendinha,
+   um produto novo, um ajuste de estoque...). Os eventos entram
+   numa FILA no aparelho e sobem pra nuvem um por um, em ordem.
+   Sem internet? A fila espera quietinha e envia quando voltar.
+   E a nuvem tem TRAVA: duas sócias vendendo juntas não se
+   atropelam NUNCA mais! 🤝
+   ============================================================ */
+let versaoNuvem = 0;          // 0 = ainda não conversamos (ou nuvem antiga v3)
+let nuvemRespondeu = false;   // já recebemos QUALQUER resposta dela?
+let sincroniaEmAndamento = false;
+let idsVendaEmCurso = {};     // produtos cujos números viajam no evento da venda
 
-// 📢 Mostra como foi a última sincronização (na aba ⚙️ Configurações)
-function renderStatusSync(){
-  const el = document.getElementById('statusSync');
-  if(!el) return;
-  const erro = localStorage.getItem('girlsShop_nuvemUltimoErro');
-  const quando = Number(localStorage.getItem('girlsShop_nuvemUltimaSync') || 0);
-  const pendente = localStorage.getItem('girlsShop_nuvemPendente') === '1';
-  if(pendente){
-    el.textContent = '⏳ Envio pendente — toque em "Sincronizar agora" pra tentar de novo!' + (erro ? ' (último erro: ' + erro + ')' : '');
-  }else if(quando){
-    el.textContent = '✅ Última sincronização: ' + new Date(quando).toLocaleString('pt-BR');
-  }else{
-    el.textContent = 'Este aparelho ainda não sincronizou.';
-  }
-  // 🕵️ Auto-diagnóstico: mostra COM QUAL nuvem este aparelho está falando!
-  // (se não terminar com o final oficial, é link errado — troquem!)
-  el.textContent += ' ☁️ Nuvem: …' + urlNuvem().slice(-16);
+function lerFila(){ try{ return JSON.parse(localStorage.getItem('girlsShop_filaEventos')) || []; }catch(e){ return []; } }
+function salvarFila(f){ try{ localStorage.setItem('girlsShop_filaEventos', JSON.stringify(f)); }catch(e){} }
+function enfileirar(ev){ const f = lerFila(); f.push(ev); salvarFila(f); renderStatusSync(); }
+function novoEventoId(prefixo){ return prefixo + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); }
+
+function postNuvem(pacote){
+  return fetch(urlNuvem(), { method:'POST', headers:{ 'Content-Type':'text/plain' }, body: JSON.stringify(pacote) }).then(r=> r.json());
 }
 
-// ✨ Embrulho mágico: toda vez que a loja salvar algo, a nuvem recebe também!
-salvarProdutos = function(lista){ salvarProdutosLocal(lista); enviarTudoParaNuvem(); };
-salvarVendas = function(v){ salvarVendasLocal(v); enviarTudoParaNuvem(); };
-salvarConfig = function(cfg){ salvarConfigLocal(cfg); enviarTudoParaNuvem(); };
-salvarAportes = function(lista){ salvarAportesLocal(lista); enviarTudoParaNuvem(); };
-salvarCompras = function(lista){ salvarComprasLocal(lista); enviarTudoParaNuvem(); };
+function marcarPendente(erro){
+  localStorage.setItem('girlsShop_nuvemPendente','1');
+  localStorage.setItem('girlsShop_nuvemUltimoErro', erro);
+  renderStatusSync();
+}
 
-// Puxa os dados da nuvem. Nuvem vazia + loja cheia = MIGRAÇÃO AUTOMÁTICA! 🌱
+// Manda a fila pra nuvem, um evento de cada vez, na ordem certinha.
+// Se um falhar, para tudo e guarda o resto pra próxima tentativa 🪂
+function enviarFila(depois){
+  if(!temNuvem()){ if(depois) depois(false); return; }
+  const passo = function(){
+    const fila = lerFila();
+    if(fila.length === 0){
+      localStorage.removeItem('girlsShop_nuvemPendente');
+      localStorage.removeItem('girlsShop_nuvemUltimoErro');
+      localStorage.setItem('girlsShop_nuvemUltimaSync', String(Date.now()));
+      renderStatusSync();
+      if(depois) depois(true);
+      return;
+    }
+    postNuvem(fila[0]).then(d=>{
+      if(d){
+        nuvemRespondeu = true;
+        if(d.versao) versaoNuvem = d.versao;
+      }
+      if(d && d.ok){
+        fila.shift();
+        salvarFila(fila);
+        passo();
+      }else{
+        marcarPendente((d && d.erro) ? String(d.erro) : 'resposta estranha da nuvem');
+        if(depois) depois(false);
+      }
+    }).catch(()=>{
+      marcarPendente('sem internet ou link da nuvem errado');
+      if(depois) depois(false);
+    });
+  };
+  passo();
+}
+
+// 📸 Retrato dos produtos: assim a gente descobre O QUE mudou a cada salvamento
+let retratoProdutos = null; // { vitrine:{id:assinatura}, numeros:{id:'estoque/vendas'} }
+function assinaturaVitrine(p){
+  return JSON.stringify([p.nome, p.emoji, p.categoria, p.custo, p.precoVenda, p.desconto, p.cor, p.status, p.foto, p.descricao, !!p.sobEncomenda]);
+}
+function tirarRetrato(lista){
+  const vitrine = {}, numeros = {};
+  lista.forEach(p=>{ vitrine[p.id] = assinaturaVitrine(p); numeros[p.id] = (p.estoque||0) + '/' + (p.vendas||0); });
+  return { vitrine: vitrine, numeros: numeros };
+}
+
+// 🧮 Monta os ajustes de estoque de uma venda (pra auto-cura reenviar certinho!)
+function ajustesDaVenda(v, produtos){
+  const ajustes = [];
+  (v.itens || []).forEach(item=>{
+    const p = produtos.find(x=> x.id === item.produtoId);
+    if(p && ehCombo(p)){
+      ajustes.push({ id: p.id, dEstoque: 0, dVendas: item.qtd });
+      componentesDoCombo(p, produtos).forEach(c=>{
+        ajustes.push({ id: c.id, dEstoque: c.sobEncomenda ? 0 : -item.qtd, dVendas: item.qtd });
+      });
+    }else{
+      ajustes.push({ id: item.produtoId, dEstoque: item.encomenda ? 0 : -item.qtd, dVendas: item.qtd });
+    }
+  });
+  return ajustes;
+}
+
+// ✨ Embrulho mágico v4: salvar produtos → descobre as mudancinhas → vira evento!
+salvarProdutos = function(lista){
+  salvarProdutosLocal(lista);
+  if(!retratoProdutos){ retratoProdutos = tirarRetrato(lista); return; }
+  const antes = retratoProdutos;
+  const depois = tirarRetrato(lista);
+  // produtos que SUMIRAM da lista (apagar pra sempre 🔥)
+  Object.keys(antes.vitrine).forEach(id=>{
+    if(depois.vitrine[id] === undefined && !idsVendaEmCurso[id]){
+      enfileirar({ acao:'produto', produto:{ id: Number(id), apagar: true } });
+    }
+  });
+  lista.forEach(p=>{
+    if(idsVendaEmCurso[p.id]) return; // números desses já viajaram no evento da venda!
+    const novo = antes.vitrine[p.id] === undefined;
+    if(novo || antes.vitrine[p.id] !== depois.vitrine[p.id]){
+      enfileirar({ acao:'produto', produto: p });
+    }
+    if(!novo && antes.numeros[p.id] !== depois.numeros[p.id]){
+      const numAntes = (antes.numeros[p.id] || '0/0').split('/');
+      const dE = (p.estoque||0) - Number(numAntes[0]);
+      const dV = (p.vendas||0) - Number(numAntes[1]);
+      if(dE !== 0 || dV !== 0){
+        enfileirar({ acao:'estoque', eventoId: novoEventoId('aj'), ajustes:[{ id: p.id, dEstoque: dE, dVendas: dV }], motivo: 'ajuste manual no painel' });
+      }
+    }
+  });
+  idsVendaEmCurso = {};
+  retratoProdutos = depois;
+  enviarFila();
+};
+
+// ⚙️ Config / 💎 Cofre também viram eventos (o linkNuvem NÃO viaja: é de cada aparelho!)
+salvarConfig = function(cfg){
+  salvarConfigLocal(cfg);
+  enfileirar({ acao:'config', config: cfg });
+  enviarFila();
+};
+salvarAportes = function(lista){
+  salvarAportesLocal(lista);
+  enfileirar({ acao:'cofre', aportes: lista, compras: lerCompras() });
+  enviarFila();
+};
+salvarCompras = function(lista){
+  salvarComprasLocal(lista);
+  enfileirar({ acao:'cofre', aportes: lerAportes(), compras: lista });
+  enviarFila();
+};
+
+// Puxa os dados da nuvem e ADOTA o que ela tem (ela é a fonte da verdade!),
+// sem perder o que está na fila esperando pra subir. E tem AUTO-CURA 🩹:
+// achou produto/venda/aporte local que a nuvem não conhece? Enfileira pra subir!
 function puxarDaNuvem(depois){
   if(!temNuvem()){ if(depois) depois(false); return; }
   fetch(urlNuvem() + '?acao=ler&t=' + Date.now())
     .then(r=> r.json())
     .then(d=>{
-      if(!d || !d.ok){ if(depois) depois(false); return; }
+      if(!d){ if(depois) depois(false); return; }
+      nuvemRespondeu = true;
+      if(d.versao) versaoNuvem = d.versao;
+      if(!d.ok){ renderStatusSync(); if(depois) depois(false); return; }
       const cfgLocal = lerConfig();
 
       // 🌱 Migração: a nuvem nasceu vazia e a loja local tem tudo!
@@ -2338,32 +2483,125 @@ function puxarDaNuvem(depois){
         return;
       }
 
-      // Nuvem mais nova que o aparelho? Adota os dados dela!
-      if((d.atualizadoEm || 0) > (cfgLocal.atualizadoEm || 0)){
-        const produtosNuvem = d.produtos || [];
-        // ✨ preserva "sob encomenda" se a nuvem ainda não conhece a bandeira
-        const locais = lerProdutos();
-        produtosNuvem.forEach(pn=>{
-          if(pn.sobEncomenda === undefined){
-            const pl = locais.find(x=> x.id === pn.id);
-            if(pl && pl.sobEncomenda) pn.sobEncomenda = true;
-          }
-        });
-        salvarProdutosLocal(produtosNuvem);
-        salvarVendasLocal(d.vendas || []);
-        // Aportes e compras: só adota se a nuvem MANDOU (senão, mantém os locais!)
+      const fila = lerFila();
+      const produtosNaFila = {}, vendasNaFila = {};
+      fila.forEach(ev=>{
+        if(ev.acao === 'produto' && ev.produto && !ev.produto.apagar) produtosNaFila[ev.produto.id] = true;
+        if(ev.acao === 'venda' && ev.venda) vendasNaFila[ev.venda.id] = true;
+      });
+
+      // 🩹 AUTO-CURA 1: produto local que a nuvem não conhece → sobe agora!
+      const idsNuvem = {}; (d.produtos || []).forEach(p=>{ idsNuvem[p.id] = true; });
+      const locais = lerProdutos();
+      let curas = 0;
+      locais.forEach(p=>{
+        if(!idsNuvem[p.id] && !produtosNaFila[p.id]){
+          enfileirar({ acao:'produto', produto: p });
+          produtosNaFila[p.id] = true;
+          curas++;
+        }
+      });
+
+      // 🩹 AUTO-CURA 2: venda local que a nuvem não conhece → sobe com os ajustes!
+      const idsVendasNuvem = {}; (d.vendas || []).forEach(v=>{ idsVendasNuvem[v.id] = true; });
+      lerVendas().forEach(v=>{
+        if(!idsVendasNuvem[v.id] && !vendasNaFila[v.id]){
+          enfileirar({ acao:'venda', eventoId: novoEventoId('cura'), venda: v, ajustes: ajustesDaVenda(v, locais), compras: [] });
+          vendasNaFila[v.id] = true;
+          curas++;
+        }
+      });
+
+      // 🩹 AUTO-CURA 3: aportes/compras que a nuvem não tem → o cofre sobe inteiro!
+      const idsAportesNuvem = {}; (d.aportes || []).forEach(a=>{ idsAportesNuvem[a.id] = true; });
+      const idsComprasNuvem = {}; (d.compras || []).forEach(c=>{ idsComprasNuvem[c.id] = true; });
+      const aportesLoc = lerAportes(), comprasLoc = lerCompras();
+      const faltaAporte = aportesLoc.some(a=> !idsAportesNuvem[a.id]);
+      const faltaCompra = comprasLoc.some(c=> !idsComprasNuvem[c.id]);
+      if(faltaAporte || faltaCompra){
+        const uniaoA = (d.aportes || []).concat(aportesLoc.filter(a=> !idsAportesNuvem[a.id]));
+        const uniaoC = (d.compras || []).concat(comprasLoc.filter(c=> !idsComprasNuvem[c.id]));
+        enfileirar({ acao:'cofre', aportes: uniaoA, compras: uniaoC });
+        salvarAportesLocal(uniaoA);
+        salvarComprasLocal(uniaoC);
+        curas++;
+      }else{
         if(d.aportes !== undefined) salvarAportesLocal(d.aportes);
         if(d.compras !== undefined) salvarComprasLocal(d.compras);
-        const cfgNova = d.config || {};
-        cfgNova.linkNuvem = cfgLocal.linkNuvem; // o link mora no aparelho!
-        cfgNova.atualizadoEm = d.atualizadoEm;
+      }
+
+      // 📦 Adota os produtos da nuvem + mantém os locais que ainda vão subir
+      const adotados = (d.produtos || []).slice();
+      locais.forEach(p=>{ if(!idsNuvem[p.id]) adotados.push(p); });
+      salvarProdutosLocal(adotados);
+      retratoProdutos = tirarRetrato(adotados);
+
+      // 💰 Vendas: as da nuvem + as locais que estão subindo na fila
+      const vendasAdotadas = (d.vendas || []).slice();
+      lerVendas().forEach(v=>{ if(!idsVendasNuvem[v.id]) vendasAdotadas.push(v); });
+      salvarVendasLocal(vendasAdotadas);
+
+      // ⚙️ Config: adota a da nuvem, MAS o linkNuvem mora no aparelho!
+      if(d.config){
+        const cfgNova = d.config;
+        cfgNova.linkNuvem = cfgLocal.linkNuvem;
         cfgNova.seedCarregado = true;
         salvarConfigLocal(cfgNova);
-        try{ localStorage.setItem('girlsShop_log', JSON.stringify(d.log || [])); }catch(e){}
-        if(depois) depois(true);
-      }else if(depois) depois(false);
+      }
+      try{ localStorage.setItem('girlsShop_log', JSON.stringify(d.log || [])); }catch(e){}
+
+      renderStatusSync();
+      if(curas > 0) enviarFila(); // as curinhas sobem na hora!
+      if(depois) depois(true, curas);
     })
     .catch(()=>{ if(depois) depois(false); });
+}
+
+// 🔄 O grande abraço: puxa novidades → sobe a fila → puxa o estado final.
+// Usado pelo botão "Sincronizar agora" E pela sincronia automática!
+function sincronizarTudo(comVoz){
+  if(!temNuvem()){ if(comVoz) toast('Sem nuvem configurada! ☁️'); return; }
+  if(sincroniaEmAndamento){ if(comVoz) toast('Já estou sincronizando! ⏳'); return; }
+  sincroniaEmAndamento = true;
+  if(comVoz) toast('☁️ Conversando com a nuvem...');
+  puxarDaNuvem(function(mudou1, curas){
+    enviarFila(function(){
+      puxarDaNuvem(function(mudou2){
+        sincroniaEmAndamento = false;
+        renderStatusSync();
+        if(mudou1 || mudou2) renderTudo();
+        if(comVoz){
+          const pend = lerFila().length;
+          if(pend > 0) toast('⏳ Faltaram ' + pend + ' coisinhas — ' + (localStorage.getItem('girlsShop_nuvemUltimoErro') || 'toque de novo!'));
+          else if(curas > 0) toast('🩹 Achei ' + curas + ' coisinhas perdidas e subi tudo! Olha a planilha! 🎉');
+          else toast('☁️ Tudo sincronizado! Painel e planilha são gêmeos! 👯');
+        }
+      });
+    });
+  });
+}
+
+// 🔄 Botão "Sincronizar agora": o grande abraço, com voz alta! 📢
+document.getElementById('btnSyncNuvem').onclick = ()=> sincronizarTudo(true);
+
+// 📢 Mostra como anda a sincronia (na aba ⚙️ Configurações)
+function renderStatusSync(){
+  const el = document.getElementById('statusSync');
+  if(!el) return;
+  const erro = localStorage.getItem('girlsShop_nuvemUltimoErro');
+  const quando = Number(localStorage.getItem('girlsShop_nuvemUltimaSync') || 0);
+  const fila = lerFila().length;
+  if(fila > 0){
+    el.textContent = '⏳ ' + fila + ' coisinha(s) esperando pra subir' + (erro ? ' (último erro: ' + erro + ')' : ' — enviando...');
+  }else if(quando){
+    el.textContent = '✅ Tudo na nuvem! Última sincronia: ' + new Date(quando).toLocaleString('pt-BR');
+  }else{
+    el.textContent = 'Este aparelho ainda não sincronizou.';
+  }
+  // 🕵️ Auto-diagnóstico: COM QUAL nuvem este aparelho fala + qual a versão dela!
+  el.textContent += ' ☁️ Nuvem: …' + urlNuvem().slice(-16);
+  if(versaoNuvem > 0) el.textContent += ' (v' + versaoNuvem + ' ✨)';
+  else if(nuvemRespondeu) el.textContent += ' (⚠️ v3 antiga — o arquiteto precisa atualizar o Apps Script!)';
 }
 
 /* ============================================================
@@ -2454,15 +2692,13 @@ carregarSeed();      // 1ª vez? cria produtos de exemplo
 montarTeclado();     // monta o teclado do PIN
 mostrarPasso(1);     // wizard começa no passo 1
 
-// ☁️ Sincroniza com a nuvem (se estiver configurada)...
-puxarDaNuvem(function(mudou){
-  if(mudou){
-    renderTudo(); // redesenha tudo com as novidades da planilha!
-    toast('☁️ Novidades da nuvem chegaram! ✨');
-  }
-});
-// ...e se ficou algo pendente de enviar, manda agora!
-if(localStorage.getItem('girlsShop_nuvemPendente') === '1') enviarTudoParaNuvem();
+// ☁️ SINCRONIA AUTOMÁTICA — o painel e a nuvem andam de mãos dadas!
+// 1) Ao abrir o painel...
+sincronizarTudo(false);
+// 2) ...a cada 45 segundinhos, sem atrapalhar ninguém...
+setInterval(function(){ if(!document.hidden) sincronizarTudo(false); }, 45000);
+// 3) ...e sempre que a aba volta pro foco (trocou de app? as novidades te esperam!)
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) sincronizarTudo(false); });
 
 // Se já entrou com PIN nessa aba, pula direto pro painel!
 if(sessionStorage.getItem('girlsShop_sessao') === 'ok'){

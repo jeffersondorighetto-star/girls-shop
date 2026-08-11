@@ -1,5 +1,5 @@
 /* ============================================================
-   🛍️ GIRLS SHOP — PLANILHA VIVA (Instalador Mágico) v3
+   🛍️ GIRLS SHOP — PLANILHA VIVA (Instalador Mágico) v4
    ============================================================
    O que este script faz:
    1. instalarLoja() → cria a planilha-banco-de-dados da loja,
@@ -14,10 +14,20 @@
       • cria o ID sozinho quando digitam o nome do produto
       • converte link do Google Drive em foto da vitrine
       • preenche o status "disponivel" sozinho
+   6. ⭐ NOVO NA v4 — EVENTOS (a sincronia definitiva!):
+      • venda / desfazerVenda → baixa estoque COM TRAVA (duas sócias
+        vendendo ao mesmo tempo não se atropelam mais!)
+      • produto → nasce/atualiza UM produto (sem sobrescrever a loja)
+      • estoque → ajuste manual de estoque por diferença (+/-)
+      • config / cofre → configurações, aportes e compras
+      • cada evento tem uma "digital" (eventoId): se chegar duas
+        vezes por acidente, a segunda é ignorada. Nada duplica!
 
    📖 Passo a passo completo: ver o arquivo GUIA-NUVEM.md
    Conta da loja: girls.shop.sjc@gmail.com
    ============================================================ */
+
+const VERSAO_NUVEM = 4;
 
 const NOME_PLANILHA = '🛍️ Girls Shop — Banco de Dados';
 const NOME_PASTA_FOTOS = 'GirlsShop Fotos';
@@ -429,6 +439,7 @@ function doGet(e) {
 
     return responderJSON({
       ok: true,
+      versao: VERSAO_NUVEM,
       atualizadoEm: Number(PropertiesService.getScriptProperties().getProperty('ATUALIZADO_EM') || 0),
       produtos: produtos,
       vendas: vendas,
@@ -463,14 +474,245 @@ function doPost(e) {
       if (pacote.compras !== undefined) escreverAbaCompras(ss.getSheetByName('🛒 Compras'), pacote.compras);
       PropertiesService.getScriptProperties()
         .setProperty('ATUALIZADO_EM', String(pacote.atualizadoEm || Date.now()));
-      return responderJSON({ ok: true });
+      return responderJSON({ ok: true, versao: VERSAO_NUVEM });
     }
 
-    return responderJSON({ ok: false, erro: 'acao desconhecida' });
+    /* ---------- ⭐ v4: EVENTOS (um de cada vez, com trava e digital!) ---------- */
+
+    if (pacote.acao === 'venda')          return responderJSON(registrarVendaNuvem(pacote));
+    if (pacote.acao === 'desfazerVenda')  return responderJSON(desfazerVendaNuvem(pacote));
+    if (pacote.acao === 'produto')        return responderJSON(upsertProdutoNuvem(pacote.produto || {}));
+    if (pacote.acao === 'estoque')        return responderJSON(ajustarEstoqueNuvem(pacote));
+    if (pacote.acao === 'config')         return responderJSON(salvarConfigNuvem(pacote.config || {}));
+    if (pacote.acao === 'cofre')          return responderJSON(salvarCofreNuvem(pacote));
+
+    return responderJSON({ ok: false, erro: 'acao desconhecida', versao: VERSAO_NUVEM });
   } catch (erro) {
     // conta o erro DE VERDADE (diagnóstico vale ouro! 🕵️)
-    return responderJSON({ ok: false, erro: 'falha: ' + String(erro) });
+    return responderJSON({ ok: false, erro: 'falha: ' + String(erro), versao: VERSAO_NUVEM });
   }
+}
+
+/* ============================================================
+   ⭐ v4 — O MOTOR DOS EVENTOS
+   Cada evento é UMA mudancinha (uma venda, um produto novo...).
+   A TRAVA (LockService) garante: um de cada vez, sem atropelo —
+   Valentina e Alice podem vender NO MESMO segundo que a fila
+   anda direitinho. E a "digital" (eventoId) impede duplicados:
+   se a internet falhar e o site reenviar, o segundo é ignorado.
+   ============================================================ */
+
+// 🔒 Roda a função segurando a trava da loja (um de cada vez!)
+function comTrava(funcao) {
+  const trava = LockService.getScriptLock();
+  if (!trava.tryLock(25000)) {
+    return { ok: false, erro: 'a loja está ocupadinha, tente de novo', versao: VERSAO_NUVEM };
+  }
+  try {
+    return funcao();
+  } finally {
+    trava.releaseLock();
+  }
+}
+
+// 🕵️ Essa digital já passou por aqui? (olha as últimas 200 linhas do Log)
+function eventoJaFoi(abaLog, eventoId) {
+  if (!eventoId) return false;
+  const ultima = abaLog.getLastRow();
+  if (ultima < 2) return false;
+  const quantas = Math.min(200, ultima - 1);
+  const dados = abaLog.getRange(ultima - quantas + 1, 4, quantas, 1).getValues();
+  const marca = 'evento:' + eventoId;
+  for (let i = 0; i < dados.length; i++) {
+    if (String(dados[i][0]) === marca) return true;
+  }
+  return false;
+}
+
+// ✍️ Anota o evento no diário da loja (com a digital na última coluna)
+function registrarEvento(abaLog, acao, detalhe, eventoId) {
+  abaLog.appendRow([new Date().toISOString(), acao, detalhe || '', eventoId ? 'evento:' + eventoId : '']);
+}
+
+// 🕐 Avisa que a loja mudou (os aparelhos puxam as novidades!)
+function tocarAtualizadoEm() {
+  PropertiesService.getScriptProperties().setProperty('ATUALIZADO_EM', String(Date.now()));
+}
+
+// 🔎 Acha a linha de um produto pelo ID (0 = não achou)
+function acharLinhaProduto(aba, id) {
+  const ultima = aba.getLastRow();
+  if (ultima < 2) return 0;
+  const ids = aba.getRange(2, 1, ultima - 1, 1).getValues();
+  for (let i = 0; i < ids.length; i++) {
+    if (Number(ids[i][0]) === Number(id)) return i + 2;
+  }
+  return 0;
+}
+
+// 📦 Aplica ajustes de estoque/vendidos por DIFERENÇA (+/-)
+//    (por diferença, duas vendas ao mesmo tempo SOMAM direitinho!)
+function aplicarAjustes(abaProdutos, ajustes) {
+  const estoques = {};
+  (ajustes || []).forEach(a => {
+    const linha = acharLinhaProduto(abaProdutos, a.id);
+    if (!linha) return;
+    if (a.dEstoque) {
+      const cel = abaProdutos.getRange(linha, 8); // coluna estoque
+      const novo = Math.max(0, Number(cel.getValue() || 0) + Number(a.dEstoque));
+      cel.setValue(novo);
+      estoques[a.id] = novo;
+      // zerou → esgotado; voltou → disponivel (magia da Troca Rápida!)
+      const celStatus = abaProdutos.getRange(linha, 10);
+      const status = String(celStatus.getValue() || '');
+      if (novo === 0 && status === 'disponivel') celStatus.setValue('esgotado');
+      if (novo > 0 && status === 'esgotado') celStatus.setValue('disponivel');
+    }
+    if (a.dVendas) {
+      const cel = abaProdutos.getRange(linha, 11); // coluna vendidos
+      cel.setValue(Math.max(0, Number(cel.getValue() || 0) + Number(a.dVendas)));
+    }
+  });
+  return estoques;
+}
+
+// 💰 VENDA: grava o registro + baixa o estoque, tudo junto e travado!
+function registrarVendaNuvem(pacote) {
+  return comTrava(function() {
+    const ss = planilha();
+    const abaLog = ss.getSheetByName('📜 Log');
+    if (eventoJaFoi(abaLog, pacote.eventoId)) {
+      return { ok: true, duplicada: true, versao: VERSAO_NUVEM }; // chegou 2x? ignora!
+    }
+    const v = pacote.venda || {};
+    // 1) grava a venda no topo da aba (a mais nova aparece primeiro!)
+    const abaVendas = ss.getSheetByName('💰 Vendas');
+    abaVendas.insertRowAfter(1);
+    abaVendas.getRange(2, 1, 1, 5).setValues([[
+      v.id || Date.now(), v.data || new Date().toISOString(),
+      JSON.stringify(v.itens || []), (v.total || 0) / 100, (v.lucro || 0) / 100
+    ]]);
+    // 2) baixa o estoque (por diferença: à prova de atropelo!)
+    const estoques = aplicarAjustes(ss.getSheetByName('🛍️ Produtos'), pacote.ajustes);
+    // 3) encomendas viram ordens de compra pendentes
+    if (pacote.compras && pacote.compras.length) {
+      const abaCompras = ss.getSheetByName('🛒 Compras');
+      pacote.compras.forEach(c => {
+        abaCompras.insertRowAfter(1);
+        abaCompras.getRange(2, 1, 1, 6).setValues([[
+          c.id || Date.now(), c.data || new Date().toISOString(),
+          c.descricao || '', (c.valor || 0) / 100, c.status || 'pendente', c.origem || 'encomenda'
+        ]]);
+      });
+    }
+    registrarEvento(abaLog, '💰 Vendeu!', (v.itens || []).map(i => i.qtd + 'x ' + i.nome).join(', '), pacote.eventoId);
+    tocarAtualizadoEm();
+    return { ok: true, versao: VERSAO_NUVEM, estoques: estoques };
+  });
+}
+
+// ↩️ DESFAZER VENDA: apaga o registro e devolve o estoque (travado também!)
+function desfazerVendaNuvem(pacote) {
+  return comTrava(function() {
+    const ss = planilha();
+    const abaLog = ss.getSheetByName('📜 Log');
+    if (eventoJaFoi(abaLog, pacote.eventoId)) {
+      return { ok: true, duplicada: true, versao: VERSAO_NUVEM };
+    }
+    // 1) apaga a linha da venda (se ainda existe)
+    const abaVendas = ss.getSheetByName('💰 Vendas');
+    const ultima = abaVendas.getLastRow();
+    if (ultima >= 2) {
+      const ids = abaVendas.getRange(2, 1, ultima - 1, 1).getValues();
+      for (let i = 0; i < ids.length; i++) {
+        if (Number(ids[i][0]) === Number(pacote.vendaId)) { abaVendas.deleteRow(i + 2); break; }
+      }
+    }
+    // 2) devolve o estoque (o site já manda os ajustes invertidos!)
+    const estoques = aplicarAjustes(ss.getSheetByName('🛍️ Produtos'), pacote.ajustes);
+    registrarEvento(abaLog, '↩️ Desfez venda', 'venda ' + pacote.vendaId, pacote.eventoId);
+    tocarAtualizadoEm();
+    return { ok: true, versao: VERSAO_NUVEM, estoques: estoques };
+  });
+}
+
+// 🛍️ PRODUTO: nasce um novo ou atualiza UM (nunca sobrescreve a loja!)
+//    Regra de ouro: produto existente NÃO mexe em estoque/vendidos por aqui —
+//    números só mudam por eventos de venda/estoque (à prova de atropelo!).
+function upsertProdutoNuvem(p) {
+  return comTrava(function() {
+    const ss = planilha();
+    const aba = ss.getSheetByName('🛍️ Produtos');
+    const abaLog = ss.getSheetByName('📜 Log');
+    const linha = acharLinhaProduto(aba, p.id);
+    if (p.apagar) {
+      if (linha) aba.deleteRow(linha);
+      registrarEvento(abaLog, '🔥 Apagou produto', p.nome || ('id ' + p.id), null);
+      tocarAtualizadoEm();
+      return { ok: true, versao: VERSAO_NUVEM };
+    }
+    if (linha) {
+      // atualiza só os campos "de vitrine" (colunas 2-7: nome até desconto)
+      // estoque (8) e vendidos (11) ficam com os eventos — à prova de atropelo!
+      aba.getRange(linha, 2, 1, 6).setValues([[
+        p.nome || '', p.emoji || '🎀', p.categoria || 'Outros',
+        (p.custo || 0) / 100, (p.precoVenda || 0) / 100, p.desconto || 0
+      ]]);
+      aba.getRange(linha, 9).setValue(p.cor || '');
+      aba.getRange(linha, 10).setValue(p.status || 'disponivel');
+      aba.getRange(linha, 12, 1, 3).setValues([[p.foto || '', p.descricao || '', p.sobEncomenda ? 'sim' : '']]);
+      registrarEvento(abaLog, '✏️ Atualizou produto', p.nome || ('id ' + p.id), null);
+    } else {
+      // nasceu um produto novo! 🌱 (aqui o estoque inicial entra junto)
+      aba.appendRow([
+        p.id || Date.now(), p.nome || '', p.emoji || '🎀', p.categoria || 'Outros',
+        (p.custo || 0) / 100, (p.precoVenda || 0) / 100, p.desconto || 0, p.estoque || 0,
+        p.cor || '', p.status || 'disponivel', p.vendas || 0, p.foto || '',
+        p.descricao || '', p.sobEncomenda ? 'sim' : ''
+      ]);
+      registrarEvento(abaLog, '🌱 Produto novo!', p.nome || '', null);
+    }
+    tocarAtualizadoEm();
+    return { ok: true, versao: VERSAO_NUVEM };
+  });
+}
+
+// 📦 ESTOQUE: ajuste manual por diferença (Troca Rápida, correções...)
+function ajustarEstoqueNuvem(pacote) {
+  return comTrava(function() {
+    const ss = planilha();
+    const abaLog = ss.getSheetByName('📜 Log');
+    if (eventoJaFoi(abaLog, pacote.eventoId)) {
+      return { ok: true, duplicada: true, versao: VERSAO_NUVEM };
+    }
+    const estoques = aplicarAjustes(ss.getSheetByName('🛍️ Produtos'), pacote.ajustes);
+    registrarEvento(abaLog, '📦 Ajuste de estoque', pacote.motivo || '', pacote.eventoId);
+    tocarAtualizadoEm();
+    return { ok: true, versao: VERSAO_NUVEM, estoques: estoques };
+  });
+}
+
+// ⚙️ CONFIG: nome da loja, PIN, meta... (o linkNuvem NÃO viaja: é de cada aparelho!)
+function salvarConfigNuvem(config) {
+  return comTrava(function() {
+    const ss = planilha();
+    delete config.linkNuvem;
+    delete config.seedCarregado;
+    escreverAbaConfig(ss.getSheetByName('⚙️ Config'), config);
+    tocarAtualizadoEm();
+    return { ok: true, versao: VERSAO_NUVEM };
+  });
+}
+
+// 💎 COFRE: aportes + compras (lista inteira, atualizada)
+function salvarCofreNuvem(pacote) {
+  return comTrava(function() {
+    const ss = planilha();
+    if (pacote.aportes !== undefined) escreverAbaAportes(ss.getSheetByName('💎 Aportes'), pacote.aportes);
+    if (pacote.compras !== undefined) escreverAbaCompras(ss.getSheetByName('🛒 Compras'), pacote.compras);
+    tocarAtualizadoEm();
+    return { ok: true, versao: VERSAO_NUVEM };
+  });
 }
 
 /* ---------- Leitura (planilha → site). R$ viram centavos! ---------- */
