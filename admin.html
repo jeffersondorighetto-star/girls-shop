@@ -395,6 +395,8 @@ label{font-weight:700;display:block;margin:10px 0 4px}
       <label>🔗 Link da Nuvem (opcional — conecta a loja à Planilha Viva!)</label>
       <input type="url" id="cfgNuvem" placeholder="https://script.google.com/macros/.../exec">
       <p id="statusNuvem" style="font-size:14px;color:var(--texto-suave);margin-top:4px"></p>
+      <button class="btn-lilas" style="width:100%;margin-top:8px;padding:12px" id="btnSyncNuvem">🔄 Sincronizar com a nuvem agora</button>
+      <p id="statusSync" style="font-size:13px;color:var(--texto-suave);margin-top:6px"></p>
       <label>🎯 Meta de lucro do mês (R$)</label>
       <input type="number" id="cfgMeta" min="0" step="0.01" inputmode="decimal">
       <label>🎂 Aniversário da Valentina (DD/MM)</label>
@@ -1804,8 +1806,10 @@ function renderConfig(){
   document.getElementById('cfgWhats').value = cfg.whatsapp || '';
   document.getElementById('cfgGrupo').value = cfg.linkGrupo || '';
   document.getElementById('cfgNuvem').value = cfg.linkNuvem || '';
-  document.getElementById('statusNuvem').textContent =
-    (cfg.linkNuvem ? '☁️ Nuvem conectada! A Planilha Viva está ligada ✨' : '💾 Modo local: os dados ficam só neste aparelho');
+  document.getElementById('statusNuvem').textContent = temNuvem()
+    ? '☁️ Nuvem conectada! A Planilha Viva está ligada ✨' + (cfg.linkNuvem ? '' : ' (link padrão do arquiteto 🌙)')
+    : '💾 Modo local: os dados ficam só neste aparelho';
+  renderStatusSync();
   document.getElementById('cfgMeta').value = cfg.metaMensal ? (cfg.metaMensal/100).toFixed(2) : '';
   document.getElementById('cfgNiver1').value = (cfg.aniversarios && cfg.aniversarios[0]) || '';
   document.getElementById('cfgNiver2').value = (cfg.aniversarios && cfg.aniversarios[1]) || '';
@@ -1904,8 +1908,10 @@ const salvarAportesLocal = salvarAportes;
 const salvarComprasLocal = salvarCompras;
 
 // Manda TUDO pra nuvem (POST text/plain de propósito: passa liso pelo CORS!)
-function enviarTudoParaNuvem(){
-  if(!temNuvem()) return;
+// comVoz=true → conta em voz alta o que aconteceu (botão "Sincronizar agora" 📢)
+function enviarTudoParaNuvem(comVoz){
+  if(!temNuvem()){ if(comVoz) toast('Sem nuvem configurada! ☁️'); return; }
+  if(comVoz) toast('☁️ Enviando tudo pra nuvem...');
   const cfg = lerConfig();
   cfg.atualizadoEm = Date.now();
   salvarConfigLocal(cfg);
@@ -1928,13 +1934,41 @@ function enviarTudoParaNuvem(){
   }).then(r=> r.json()).then(d=>{
     if(d && d.ok){
       localStorage.removeItem('girlsShop_nuvemPendente');
+      localStorage.removeItem('girlsShop_nuvemUltimoErro');
+      localStorage.setItem('girlsShop_nuvemUltimaSync', String(Date.now()));
+      if(comVoz) toast('☁️ Tudo na nuvem! Abra a planilha e veja! 🎉');
     }else{
       localStorage.setItem('girlsShop_nuvemPendente','1');
+      localStorage.setItem('girlsShop_nuvemUltimoErro', (d && d.erro) ? String(d.erro) : 'resposta estranha da nuvem');
+      if(comVoz) toast('😮 A nuvem recusou: ' + ((d && d.erro) || 'erro desconhecido'));
     }
+    renderStatusSync();
   }).catch(()=>{
     // Sem internet? Guarda a pendência e sincroniza na próxima abertura 🪂
     localStorage.setItem('girlsShop_nuvemPendente','1');
+    localStorage.setItem('girlsShop_nuvemUltimoErro','sem internet ou link da nuvem errado');
+    if(comVoz) toast('😴 Não consegui falar com a nuvem. Confere a internet e o link ⚙️');
+    renderStatusSync();
   });
+}
+
+// 🔄 Botão "Sincronizar agora": manda tudo pra nuvem com voz alta! 📢
+document.getElementById('btnSyncNuvem').onclick = ()=> enviarTudoParaNuvem(true);
+
+// 📢 Mostra como foi a última sincronização (na aba ⚙️ Configurações)
+function renderStatusSync(){
+  const el = document.getElementById('statusSync');
+  if(!el) return;
+  const erro = localStorage.getItem('girlsShop_nuvemUltimoErro');
+  const quando = Number(localStorage.getItem('girlsShop_nuvemUltimaSync') || 0);
+  const pendente = localStorage.getItem('girlsShop_nuvemPendente') === '1';
+  if(pendente){
+    el.textContent = '⏳ Envio pendente — toque em "Sincronizar agora" pra tentar de novo!' + (erro ? ' (último erro: ' + erro + ')' : '');
+  }else if(quando){
+    el.textContent = '✅ Última sincronização: ' + new Date(quando).toLocaleString('pt-BR');
+  }else{
+    el.textContent = 'Este aparelho ainda não sincronizou.';
+  }
 }
 
 // ✨ Embrulho mágico: toda vez que a loja salvar algo, a nuvem recebe também!
