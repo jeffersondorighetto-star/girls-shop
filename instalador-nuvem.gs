@@ -544,6 +544,9 @@ function lerAbaConfig(aba) {
     // campos de dinheiro voltam em centavos
     if (chave === 'metaMensal') valor = Math.round(Number(valor || 0) * 100);
     if (chave === 'aniversarios') { try { valor = JSON.parse(valor); } catch (e) { valor = []; } }
+    // o PIN é SEMPRE texto! (a planilha adora transformar "2903" em número,
+    // e aí o painel não reconhece o PIN digitado — bug do PIN fantasma 👻)
+    if (chave === 'pin') valor = String(valor);
     config[chave] = valor;
   }
   return config;

@@ -692,7 +692,7 @@ function teclaPin(t){
 
 function verificarPin(){
   const cfg = lerConfig();
-  const pinCerto = cfg.pin || '1234';
+  const pinCerto = String(cfg.pin || '1234'); // String() sempre! (a nuvem pode devolver número)
   if(pinDigitado === pinCerto){
     // Acertou! Guarda na sessão pra não pedir de novo
     sessionStorage.setItem('girlsShop_sessao','ok');
@@ -736,7 +736,7 @@ function entrarNoPainel(){
   document.getElementById('nomeLojaTopo').textContent = cfg.nomeLoja || 'Girls Shop';
   document.getElementById('timeTopo').innerHTML = timeSociasHTML(230, 74, 44); // 👑 o time no topo!
   // Avisa se o PIN ainda é o de fábrica
-  if((cfg.pin || '1234') === '1234'){
+  if(String(cfg.pin || '1234') === '1234'){
     document.getElementById('avisoPin').style.display = 'inline-block';
   }
   renderTudo();
@@ -1863,7 +1863,7 @@ document.getElementById('btnTrocarPin').onclick = ()=>{
   const atual = document.getElementById('pinAtual').value;
   const n1 = document.getElementById('pinNovo1').value;
   const n2 = document.getElementById('pinNovo2').value;
-  if(atual !== (cfg.pin || '1234')){ toast('PIN atual errado! 🤔'); return; }
+  if(atual !== String(cfg.pin || '1234')){ toast('PIN atual errado! 🤔'); return; }
   if(!/^\d{4}$/.test(n1)){ toast('O novo PIN precisa ter 4 números! 🔢'); return; }
   if(n1 !== n2){ toast('Os dois PINs novos não combinam! 😅'); return; }
   cfg.pin = n1;
