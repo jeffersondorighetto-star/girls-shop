@@ -239,6 +239,8 @@ label{font-weight:700;display:block;margin:10px 0 4px}
   <section class="aba visivel" id="aba-produtos">
     <div class="resumo-grid" id="resumo"></div>
     <h2 style="margin:14px 0 10px">Seus produtos 🧸</h2>
+    <input type="search" id="buscaProdutos" placeholder="🔍 Buscar produto pelo nome..." style="width:100%;margin-bottom:8px">
+    <div id="chipsProdutos" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
     <button class="btn-lilas" style="width:100%;margin-bottom:12px;padding:12px" id="btnNovoCombo">🎁 Criar Caixa Surpresa (combo de 2 ou 3 produtos!)</button>
     <div id="listaProdutos"></div>
   </section>
@@ -428,7 +430,7 @@ label{font-weight:700;display:block;margin:10px 0 4px}
 <div id="luna">
   <div class="balao">
     <button class="fechar" onclick="fecharLuna()">✖</button>
-    <span class="rosto">👧🏽</span>
+    <span class="rosto"><img src="avatares/luna.jpg" alt="Luna" style="width:74px;height:74px;border-radius:50%;object-fit:cover;box-shadow:0 3px 12px rgba(109,40,217,.3)"></span>
     <span id="lunaTexto"></span>
   </div>
 </div>
@@ -811,6 +813,10 @@ function precoComDesconto(p){
   return Math.round(p.precoVenda * (100 - (p.desconto||0)) / 100);
 }
 
+// 🗂️ Estado da Central de Achado (aba ativa + texto da busca)
+let filtroProdutos = 'todos';
+let buscaProdutos = '';
+
 function renderProdutos(){
   const produtos = lerProdutos();
 
@@ -842,7 +848,54 @@ function renderProdutos(){
     return;
   }
 
-  ordenados.forEach(p=>{
+  // 🔍🗂️ CENTRAL DE ACHADO: busca por nome + abas de status!
+  const contagem = {
+    todos: produtos.filter(p=> p.status !== 'removido').length,
+    esgotados: produtos.filter(p=> p.status === 'esgotado').length,
+    pausados: produtos.filter(p=> p.status === 'pausado').length,
+    combos: produtos.filter(p=> p.status !== 'removido' && ehCombo(p)).length,
+    lixeira: produtos.filter(p=> p.status === 'removido').length
+  };
+  const abasFiltro = [
+    ['todos', '📦 Todos'],
+    ['esgotados', '😱 Esgotados'],
+    ['pausados', '⏸️ Pausados'],
+    ['combos', '🎁 Combos'],
+    ['lixeira', '🗑️ Lixeira']
+  ];
+  document.getElementById('chipsProdutos').innerHTML = abasFiltro.map(function(a){
+    const ativo = filtroProdutos === a[0];
+    return '<button type="button" class="chip-filtro" data-filtro="' + a[0] + '" style="padding:7px 12px;border-radius:999px;font-weight:800;font-size:12.5px;' +
+      (ativo ? 'background:var(--lilas);color:#fff' : 'background:#F3E8FF;color:#6D28D9') + '">' +
+      a[1] + ' <b>' + contagem[a[0]] + '</b></button>';
+  }).join('');
+  document.querySelectorAll('.chip-filtro').forEach(function(b){
+    b.onclick = function(){ filtroProdutos = b.dataset.filtro; renderProdutos(); };
+  });
+
+  // Aplica a aba escolhida + a busca digitada
+  let visiveis = ordenados.filter(function(p){
+    if(filtroProdutos === 'lixeira') return p.status === 'removido';
+    if(p.status === 'removido') return false; // removidos só aparecem na Lixeira!
+    if(filtroProdutos === 'esgotados') return p.status === 'esgotado';
+    if(filtroProdutos === 'pausados') return p.status === 'pausado';
+    if(filtroProdutos === 'combos') return ehCombo(p);
+    return true;
+  });
+  if(buscaProdutos){
+    visiveis = visiveis.filter(function(p){
+      return p.nome.toLowerCase().indexOf(buscaProdutos) >= 0;
+    });
+  }
+
+  if(visiveis.length === 0){
+    lista.innerHTML = '<div class="cartao" style="text-align:center">' +
+      (filtroProdutos === 'lixeira' ? 'A lixeira está vazia — que organização! ✨' : 'Nada por aqui! 🧹 Tentem outra busca ou outra aba 🤗') +
+      '</div>';
+    return;
+  }
+
+  visiveis.forEach(p=>{
     const ehC = ehCombo(p);
     const custoMostra = ehC ? custoCombo(p, produtos) : p.custo;
     const estoqueMostra = ehC ? estoqueCombo(p, produtos) : p.estoque;
@@ -923,9 +976,95 @@ function renderProdutos(){
       botoes.appendChild(bReativar);
     }
 
+    // 🗑️ Remover: vai pra Lixeira (nada se perde!)
+    if(p.status !== 'removido'){
+      const bRemover = document.createElement('button');
+      bRemover.className = 'btn-cinza';
+      bRemover.textContent = '🗑️';
+      bRemover.title = 'Remover (vai pra Lixeira!)';
+      bRemover.onclick = ()=> abrirRemover(p.id);
+      botoes.appendChild(bRemover);
+    }
+
+    // ♻️🔥 Na Lixeira: restaurar ou apagar pra sempre
+    if(p.status === 'removido'){
+      const bRest = document.createElement('button');
+      bRest.className = 'btn-lilas';
+      bRest.textContent = '♻️ Restaurar';
+      bRest.onclick = ()=> restaurarProduto(p.id);
+      botoes.appendChild(bRest);
+      const bFogo = document.createElement('button');
+      bFogo.className = 'btn-cinza';
+      bFogo.textContent = '🔥';
+      bFogo.title = 'Apagar pra sempre';
+      bFogo.onclick = ()=> apagarPraSempre(p.id);
+      botoes.appendChild(bFogo);
+    }
+
     lista.appendChild(card);
   });
 }
+
+/* ============================================================
+   🗑️ LIXEIRA — remover sem medo! (restaurar é fácil, apagar é sério)
+   ============================================================ */
+function abrirRemover(id){
+  const produtos = lerProdutos();
+  const p = produtos.find(x=> x.id === id);
+  if(!p) return;
+  abrirModal(
+    '<h3>🗑️ Remover "' + p.nome + '"?</h3>' +
+    '<p style="color:var(--texto-suave);font-weight:600">Ele sai da vitrine e vai pra <b>Lixeira</b> (aba 🗑️ aqui em Produtos). De lá dá pra ♻️ restaurar quando quiser — nada se perde!</p>' +
+    '<div class="modal-botoes">' +
+      '<button class="btn-cinza" onclick="fecharModal()">Cancelar</button>' +
+      '<button class="btn-lilas" id="okRemover">🗑️ Remover</button>' +
+    '</div>'
+  );
+  document.getElementById('okRemover').onclick = ()=>{
+    p.status = 'removido';
+    salvarProdutos(produtos);
+    gravarLog('🗑️ Removeu produto', p.nome + ' foi pra Lixeira');
+    fecharModal();
+    renderTudo();
+    toast('Na Lixeira! Dá pra ♻️ restaurar quando quiser');
+    lunaDiz('Remover não é fracasso! É espaço para algo melhor. Empreender é aprender todo dia! 🌱');
+  };
+}
+function restaurarProduto(id){
+  const produtos = lerProdutos();
+  const p = produtos.find(x=> x.id === id);
+  if(!p) return;
+  p.status = 'pausado'; // volta pausado: vocês decidem se reativa!
+  salvarProdutos(produtos);
+  gravarLog('♻️ Restaurou produto', p.nome + ' saiu da Lixeira (pausado)');
+  renderTudo();
+  toast('De volta da Lixeira! Está ⏸️ pausado — reative quando quiser ▶️');
+}
+function apagarPraSempre(id){
+  const produtos = lerProdutos();
+  const p = produtos.find(x=> x.id === id);
+  if(!p) return;
+  abrirModal(
+    '<h3>🔥 Apagar "' + p.nome + '" PRA SEMPRE?</h3>' +
+    '<p style="color:var(--texto-suave);font-weight:600">Isso apaga o cadastro de verdade! O histórico de vendas continua guardado no placar, mas o produto não volta mais. Tem certeza?</p>' +
+    '<div class="modal-botoes">' +
+      '<button class="btn-cinza" onclick="fecharModal()">Cancelar</button>' +
+      '<button class="btn-lilas" id="okApagar">🔥 Apagar pra sempre</button>' +
+    '</div>'
+  );
+  document.getElementById('okApagar').onclick = ()=>{
+    salvarProdutos(produtos.filter(x=> x.id !== id));
+    gravarLog('🔥 Apagou produto pra sempre', p.nome);
+    fecharModal();
+    renderTudo();
+    toast('Apagado! O histórico de vendas continua guardado 📜');
+  };
+}
+// 🔍 A busca filtra enquanto digita!
+document.getElementById('buscaProdutos').addEventListener('input', function(){
+  buscaProdutos = this.value.trim().toLowerCase();
+  renderProdutos();
+});
 
 /* ============================================================
    🪟 MODAIS — caixinhas que abrem por cima da tela
@@ -2170,6 +2309,9 @@ function renderStatusSync(){
   }else{
     el.textContent = 'Este aparelho ainda não sincronizou.';
   }
+  // 🕵️ Auto-diagnóstico: mostra COM QUAL nuvem este aparelho está falando!
+  // (se não terminar com o final oficial, é link errado — troquem!)
+  el.textContent += ' ☁️ Nuvem: …' + urlNuvem().slice(-16);
 }
 
 // ✨ Embrulho mágico: toda vez que a loja salvar algo, a nuvem recebe também!

@@ -58,7 +58,7 @@ header{
   0%,100%{transform:translateY(0);}
   50%{transform:translateY(-10px);}
 }
-header h1{font-size:30px;font-weight:800;letter-spacing:.5px;}
+header h1{font-size:clamp(32px,5.5vw,52px);font-weight:800;letter-spacing:.5px;text-shadow:0 3px 12px rgba(60,20,110,.35);}
 header .frase{font-size:16px;opacity:.95;margin-top:2px;}
 
 /* Botão do carrinho no cabeçalho */
@@ -677,8 +677,21 @@ footer .aviso-fofo{
 /* Telas maiores: grid com mais colunas */
 @media(min-width:700px){
   .grid-produtos{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
-  header h1{font-size:36px;}
+  header h1{letter-spacing:1px;}
 }
+
+/* 📸 SELFIE DO TIME! Segundinhos depois de abrir, a vitrine "bate uma foto"
+   das sócias: flash + pop nos avatares + faíscas subindo! */
+#flashSelfie{
+  position:fixed;inset:0;pointer-events:none;z-index:150;opacity:0;
+  background:radial-gradient(circle at 50% 30%, rgba(255,255,255,.98), rgba(255,255,255,.7) 45%, rgba(255,255,255,0) 75%);
+}
+#flashSelfie.estoura{animation:flashEstoura .8s ease-out;}
+@keyframes flashEstoura{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
+.time-vitrine.selfie .mini-avatar{animation:popSelfie .8s ease;}
+@keyframes popSelfie{0%{transform:scale(1)}30%{transform:scale(1.18) rotate(-3deg)}60%{transform:scale(.96)}100%{transform:scale(1)}}
+.sparkle-selfie{position:fixed;z-index:151;pointer-events:none;font-size:22px;animation:sobeSparkle 1.6s ease-out forwards;}
+@keyframes sobeSparkle{0%{opacity:0;transform:translateY(10px) scale(.5)}25%{opacity:1}100%{opacity:0;transform:translateY(-70px) scale(1.3) rotate(25deg)}}
 
 /* 👑 O time na vitrine — trio assimétrico: cada sócia com seu tamanho,
    sua inclinação e sua etiqueta de nome (a foto entra sozinha quando existir!) */
@@ -1769,6 +1782,31 @@ document.getElementById("campo-nome").addEventListener("input", desenharPedido);
   document.title = (config.nomeLoja || "Girls Shop") + " — Vitrine";
 
   configurarBotaoGrupo(); // 👥 portal pro grupo (e de novo quando a nuvem chegar!)
+
+  // 📸 SELFIE DO TIME! 2,5s depois de abrir a vitrine... FLASH!
+  // A loja "bate uma foto" das sócias — pura magia de entrada! ✨
+  setTimeout(function(){
+    const time = document.querySelector(".time-vitrine");
+    if(!time) return;
+    const flash = document.createElement("div");
+    flash.id = "flashSelfie";
+    document.body.appendChild(flash);
+    requestAnimationFrame(function(){ flash.classList.add("estoura"); });
+    time.classList.add("selfie");
+    // Faíscas subindo ao redor do time ✨
+    const box = time.getBoundingClientRect();
+    ["✨","⭐","💫","📸","✨","💖"].forEach(function(em, i){
+      const s = document.createElement("span");
+      s.className = "sparkle-selfie";
+      s.textContent = em;
+      s.style.left = (box.left + Math.random() * box.width) + "px";
+      s.style.top = (box.top + box.height * 0.4) + "px";
+      s.style.animationDelay = (i * 0.12) + "s";
+      document.body.appendChild(s);
+      setTimeout(function(){ s.remove(); }, 2400);
+    });
+    setTimeout(function(){ flash.remove(); time.classList.remove("selfie"); }, 1000);
+  }, 2500);
 
   validarCarrinhoContraEstoque(); // limpa o que saiu da vitrine
   verificarAniversario();         // 🎂 festa se for o dia!

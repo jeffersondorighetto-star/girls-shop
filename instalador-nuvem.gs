@@ -468,7 +468,8 @@ function doPost(e) {
 
     return responderJSON({ ok: false, erro: 'acao desconhecida' });
   } catch (erro) {
-    return responderJSON({ ok: false, erro: 'acao desconhecida' });
+    // conta o erro DE VERDADE (diagnóstico vale ouro! 🕵️)
+    return responderJSON({ ok: false, erro: 'falha: ' + String(erro) });
   }
 }
 
