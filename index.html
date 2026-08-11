@@ -1783,7 +1783,7 @@ document.getElementById("campo-nome").addEventListener("input", desenharPedido);
 
   configurarBotaoGrupo(); // 👥 portal pro grupo (e de novo quando a nuvem chegar!)
 
-  // 📸 SELFIE DO TIME! 2,5s depois de abrir a vitrine... FLASH!
+  // 📸 SELFIE DO TIME! 2 segundinhos depois de abrir a vitrine... FLASH!
   // A loja "bate uma foto" das sócias — pura magia de entrada! ✨
   setTimeout(function(){
     const time = document.querySelector(".time-vitrine");
@@ -1806,7 +1806,7 @@ document.getElementById("campo-nome").addEventListener("input", desenharPedido);
       setTimeout(function(){ s.remove(); }, 2400);
     });
     setTimeout(function(){ flash.remove(); time.classList.remove("selfie"); }, 1000);
-  }, 2500);
+  }, 2000);
 
   validarCarrinhoContraEstoque(); // limpa o que saiu da vitrine
   verificarAniversario();         // 🎂 festa se for o dia!
