@@ -1564,6 +1564,7 @@ function puxarDaNuvem(){
       cfgNova.seedCarregado = true;
       gravarJSON(CHAVE_CONFIG, cfgNova);
       config = cfgNova;
+      configurarBotaoGrupo();       // 👥 o link do grupo pode ter chegado da nuvem!
       // Redesenha tudo com as novidades da planilha! ✨
       document.getElementById("nome-loja").textContent = config.nomeLoja || "Girls Shop";
       document.title = (config.nomeLoja || "Girls Shop") + " — Vitrine";
@@ -1573,6 +1574,42 @@ function puxarDaNuvem(){
       atualizarTudoCarrinho();
     })
     .catch(function(){ /* sem internet? a vitrine segue local 💜 */ });
+}
+
+// ------------------------------------------------------------
+// 👥 BOTÃO FLUTUANTE — portal pro grupo da loja!
+// Com grupo configurado: abre o convite do grupo no WhatsApp.
+// Sem grupo: copia um convite fofinho pra mandar pras amigas.
+// Roda na abertura E de novo quando a nuvem chega (o link do
+// grupo pode morar na planilha e chegar alguns segundos depois!).
+// ------------------------------------------------------------
+// Endereço oficial da vitrine na internet 🌍 (o convite sempre leva ele!)
+const ENDERECO_LOJA = "https://jeffersondorighetto-star.github.io/girls-shop/";
+function configurarBotaoGrupo(){
+  const btnGrupo = document.getElementById("btn-whats-flutuante");
+  if(!btnGrupo) return;
+  if(config.linkGrupo){
+    btnGrupo.href = config.linkGrupo;
+    btnGrupo.target = "_blank";
+    btnGrupo.onclick = null;
+  }else{
+    btnGrupo.href = "#";
+    btnGrupo.removeAttribute("target");
+    btnGrupo.onclick = function(e){
+      e.preventDefault();
+      // O convite SEMPRE leva o endereço oficial da vitrine! 🌍
+      const endereco = "\n👉 " + ENDERECO_LOJA;
+      const convite = "Vem ver a vitrine da " + (config.nomeLoja || "Girls Shop") +
+                      "! Coisinhas lindas te esperando 🛍️💜" + endereco;
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(convite).then(function(){
+          mostrarToast("Convite copiado! Mande pras amigas 💜");
+        }).catch(function(){ mostrarToast(convite); });
+      }else{
+        mostrarToast(convite);
+      }
+    };
+  }
 }
 
 // ------------------------------------------------------------
@@ -1609,32 +1646,7 @@ document.getElementById("campo-nome").addEventListener("input", desenharPedido);
   document.getElementById("nome-loja").textContent = config.nomeLoja || "Girls Shop";
   document.title = (config.nomeLoja || "Girls Shop") + " — Vitrine";
 
-  // Endereço oficial da vitrine na internet 🌍 (o convite sempre leva ele!)
-  const ENDERECO_LOJA = "https://jeffersondorighetto-star.github.io/girls-shop/";
-  // Botão flutuante = portal pro grupo da loja! 👥
-  // Com grupo configurado: abre o convite do grupo.
-  // Sem grupo: copia um convite fofinho pra mandar pras amigas.
-  const btnGrupo = document.getElementById("btn-whats-flutuante");
-  if(config.linkGrupo){
-    btnGrupo.href = config.linkGrupo;
-  }else{
-    btnGrupo.href = "#";
-    btnGrupo.removeAttribute("target");
-    btnGrupo.onclick = function(e){
-      e.preventDefault();
-      // O convite SEMPRE leva o endereço oficial da vitrine! 🌍
-      const endereco = "\n👉 " + ENDERECO_LOJA;
-      const convite = "Vem ver a vitrine da " + (config.nomeLoja || "Girls Shop") +
-                      "! Coisinhas lindas te esperando 🛍️💜" + endereco;
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(convite).then(function(){
-          mostrarToast("Convite copiado! Mande pras amigas 💜");
-        }).catch(function(){ mostrarToast(convite); });
-      }else{
-        mostrarToast(convite);
-      }
-    };
-  }
+  configurarBotaoGrupo(); // 👥 portal pro grupo (e de novo quando a nuvem chegar!)
 
   validarCarrinhoContraEstoque(); // limpa o que saiu da vitrine
   verificarAniversario();         // 🎂 festa se for o dia!
