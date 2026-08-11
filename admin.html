@@ -771,13 +771,15 @@ document.querySelectorAll('#abas button').forEach(btn=>{
 // descrição: 🧩combo:ID,ID,ID (a planilha carrega de graça!)
 // ------------------------------------------------------------
 function lerComboIds(p){
-  const m = (p.descricao || '').match(/🧩combo:([\d,]+)/);
+  const m = (p.descricao || '').match(/🧩(?:combo|surpresa):([\d,]+)/);
   if(!m) return null;
   return m[1].split(',').map(Number);
 }
 function ehCombo(p){ return !!lerComboIds(p); }
+// 🤫 Caixa SURPRESA: segredo na vitrine, mas o painel sempre sabe!
+function ehSurpresa(p){ return /🧩surpresa:/.test(p.descricao || ''); }
 function descricaoLimpa(p){
-  return (p.descricao || '').replace(/\s*🧩combo:[\d,]+/g, '').trim();
+  return (p.descricao || '').replace(/\s*🧩(?:combo|surpresa):[\d,]+/g, '').trim();
 }
 function componentesDoCombo(p, lista){
   const ids = lerComboIds(p) || [];
@@ -988,8 +990,8 @@ function abrirModalEditar(id){
     p.precoVenda = venda;
     p.desconto = desc;
     p.foto = foto;
-    // 🎁 A "receitinha" do combo fica guardada no final da descrição — sempre preservada!
-    p.descricao = descricao + (ehCombo(p) ? ' 🧩combo:' + lerComboIds(p).join(',') : '');
+    // 🎁 A "receitinha" do combo fica guardada no final da descrição — sempre preservada (e o segredo também! 🤫)
+    p.descricao = descricao + (ehCombo(p) ? ' ' + (ehSurpresa(p) ? '🧩surpresa:' : '🧩combo:') + lerComboIds(p).join(',') : '');
     if(ehCombo(p)){
       p.estoque = estoqueCombo(p, produtos); // só atualiza o retrato!
     }else{
@@ -1990,6 +1992,11 @@ function abrirNovoCombo(){
           '<span style="margin-left:auto;font-size:12px;color:var(--texto-suave)">' + formatarPreco(precoComDesconto(p)) + '</span>' +
         '</label>').join('') +
     '</div>' +
+    '<label>🎭 Tipo de caixinha</label>' +
+    '<div style="display:flex;gap:8px;margin-bottom:8px">' +
+      '<button type="button" class="btn-cinza" id="comboTipoVisivel" style="flex:1;outline:3px solid var(--lilas)">🎁 Visível<br><small>mostra o que tem</small></button>' +
+      '<button type="button" class="btn-cinza" id="comboTipoSurpresa" style="flex:1">🤫 Surpresa<br><small>segredo na vitrine!</small></button>' +
+    '</div>' +
     '<label>🏷️ Nome da caixinha</label>' +
     '<input type="text" id="comboNome" maxlength="40" placeholder="Ex: Caixa Surpresa das Amigas">' +
     '<div id="comboResumo" style="background:#FDF2F8;border-radius:12px;padding:10px;margin:8px 0;font-weight:700;font-size:14px">Escolham os produtinhos pra ver a mágica! ✨</div>' +
@@ -2002,6 +2009,18 @@ function abrirNovoCombo(){
       '<button class="btn-lilas" id="comboSalvar">🎁 Criar caixinha!</button>' +
     '</div>'
   );
+  // 🎭 Visível ou Surpresa? (o estoque funciona igual nos dois!)
+  let tipoSurpresa = false;
+  document.getElementById('comboTipoVisivel').onclick = ()=>{
+    tipoSurpresa = false;
+    document.getElementById('comboTipoVisivel').style.outline = '3px solid var(--lilas)';
+    document.getElementById('comboTipoSurpresa').style.outline = 'none';
+  };
+  document.getElementById('comboTipoSurpresa').onclick = ()=>{
+    tipoSurpresa = true;
+    document.getElementById('comboTipoSurpresa').style.outline = '3px solid var(--lilas)';
+    document.getElementById('comboTipoVisivel').style.outline = 'none';
+  };
   const selecionados = ()=> Array.from(document.querySelectorAll('.comboCheck:checked')).map(c=> Number(c.value));
   function atualizarResumoCombo(){
     const ids = selecionados();
@@ -2054,11 +2073,11 @@ function abrirNovoCombo(){
       status: 'disponivel',
       vendas: 0,
       foto: '',
-      descricao: (descTexto ? descTexto + ' ' : '') + '🧩combo:' + ids.join(',')
+      descricao: (descTexto ? descTexto + ' ' : '') + (tipoSurpresa ? '🧩surpresa:' : '🧩combo:') + ids.join(',')
     };
     produtos.push(novo);
     salvarProdutos(produtos);
-    gravarLog('🎁 Criou combo', nome + ': ' + comps.map(c=> c.nome).join(' + ') + ' por ' + formatarPreco(preco));
+    gravarLog('🎁 Criou combo', (tipoSurpresa ? '🤫 SURPRESA — ' : '') + nome + ': ' + comps.map(c=> c.nome).join(' + ') + ' por ' + formatarPreco(preco));
     fecharModal();
     soltarConfete(80);
     renderTudo();

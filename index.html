@@ -1049,13 +1049,16 @@ function produtosVisiveis(){
 // (a Planilha Viva carrega ela de graça, sem mexer no script!)
 // ------------------------------------------------------------
 function lerComboIds(p){
-  const m = (p.descricao || "").match(/🧩combo:([\d,]+)/);
+  const m = (p.descricao || "").match(/🧩(?:combo|surpresa):([\d,]+)/);
   if(!m) return null;
   return m[1].split(",").map(Number);
 }
 function ehCombo(p){ return !!lerComboIds(p); }
+// 🤫 Caixa SURPRESA: os produtinhos são segredo na vitrine
+// (o estoque continua certinho — só a cliente não espiou!)
+function ehSurpresa(p){ return /🧩surpresa:/.test(p.descricao || ""); }
 function descricaoLimpa(p){
-  return (p.descricao || "").replace(/\s*🧩combo:[\d,]+/g, "").trim();
+  return (p.descricao || "").replace(/\s*🧩(?:combo|surpresa):[\d,]+/g, "").trim();
 }
 function componentesDoCombo(p, lista){
   const ids = lerComboIds(p) || [];
@@ -1158,15 +1161,26 @@ function abrirDetalhes(id){
   if(ehCombo(p)){
     const comps = componentesDoCombo(p, todos);
     const soma = somaPrecoComponentes(p, todos);
-    comboHTML =
-      '<div style="background:#FDF2F8;border:2px dashed #F9A8D4;border-radius:14px;padding:10px 12px;margin:10px 0;text-align:left">' +
-        '<div style="font-weight:800;font-size:13px;color:#BE185D;margin-bottom:4px">🎁 O que vem dentro:</div>' +
-        comps.map(function(c){
-          return '<div style="font-size:13px;font-weight:700;display:flex;justify-content:space-between;padding:2px 0">' +
-                 '<span>' + c.emoji + ' ' + c.nome + '</span><span>' + formatarPreco(precoFinal(c)) + '</span></div>';
-        }).join("") +
-        (soma > final ? '<div style="margin-top:6px;font-weight:800;color:#059669;font-size:13px">💚 Levando junto, economiza ' + formatarPreco(soma - final) + '!</div>' : '') +
-      '</div>';
+    if(ehSurpresa(p)){
+      // 🤫 SURPRESA: mistério total! Só revela a quantidade e o valor
+      comboHTML =
+        '<div style="background:#F5F3FF;border:2px dashed #C4B5FD;border-radius:14px;padding:14px 12px;margin:10px 0;text-align:center">' +
+          '<div style="font-size:28px">🎀❓🎀</div>' +
+          '<div style="font-weight:800;font-size:14px;color:#6D28D9">É SURPRESA! 🤫</div>' +
+          '<div style="font-size:13px;font-weight:700;color:var(--texto-suave);margin-top:4px">São ' + comps.length + ' produtinhos escolhidos com carinho pelas sócias. O que será? Só revelamos quando você abrir a caixinha!</div>' +
+          (soma > final ? '<div style="margin-top:8px;font-weight:800;color:#059669;font-size:14px">💎 Vale ' + formatarPreco(soma) + ' — por ' + formatarPreco(final) + '!</div>' : '') +
+        '</div>';
+    }else{
+      comboHTML =
+        '<div style="background:#FDF2F8;border:2px dashed #F9A8D4;border-radius:14px;padding:10px 12px;margin:10px 0;text-align:left">' +
+          '<div style="font-weight:800;font-size:13px;color:#BE185D;margin-bottom:4px">🎁 O que vem dentro:</div>' +
+          comps.map(function(c){
+            return '<div style="font-size:13px;font-weight:700;display:flex;justify-content:space-between;padding:2px 0">' +
+                   '<span>' + c.emoji + ' ' + c.nome + '</span><span>' + formatarPreco(precoFinal(c)) + '</span></div>';
+          }).join("") +
+          (soma > final ? '<div style="margin-top:6px;font-weight:800;color:#059669;font-size:13px">💚 Levando junto, economiza ' + formatarPreco(soma - final) + '!</div>' : '') +
+        '</div>';
+    }
     const caixinhas = estoqueCombo(p, todos);
     estoqueHTML = comboTemEncomenda(p, todos)
       ? '<div class="modal-estoque" style="color:#0D9488">✨ Preparado com carinho — tem item sob encomenda dentro!</div>'
@@ -1271,7 +1285,9 @@ function desenharProdutos(){
     // Badges de oferta
     let badges = "";
     if(ehC){
-      badges = '<span class="badge-oferta" style="background:linear-gradient(135deg,#F472B6,#EC4899)">🎁 COMBO</span>';
+      badges = ehSurpresa(p)
+        ? '<span class="badge-oferta" style="background:linear-gradient(135deg,#C4B5FD,#8B5CF6)">🤫 SURPRESA</span>'
+        : '<span class="badge-oferta" style="background:linear-gradient(135deg,#F472B6,#EC4899)">🎁 COMBO</span>';
     }
     if(p.desconto > 0){
       badges += '<span class="badge-oferta">🔥 OFERTA</span>' +
@@ -1295,8 +1311,10 @@ function desenharProdutos(){
     // Aviso de últimas unidades (ou o selo mágico de sob encomenda ✨)
     let avisoEstoque = "";
     if(ehC){
-      const dentro = componentesDoCombo(p, todos).map(function(c){ return c.emoji; }).join(' ');
-      avisoEstoque = '<div class="card-categoria" style="font-weight:700">🎁 Vem com: ' + dentro + '</div>';
+      const compsCard = componentesDoCombo(p, todos);
+      avisoEstoque = ehSurpresa(p)
+        ? '<div class="card-categoria" style="font-weight:700">🤫 ' + compsCard.length + ' produtinhos misteriosos!</div>'
+        : '<div class="card-categoria" style="font-weight:700">🎁 Vem com: ' + compsCard.map(function(c){ return c.emoji; }).join(' ') + '</div>';
       if(comboTemEncomenda(p, todos)){
         avisoEstoque += '<div class="card-categoria" style="color:#0D9488;font-weight:700;">✨ Preparado com carinho!</div>';
       }else{
@@ -1547,8 +1565,13 @@ function montarTextoPedido(){
     const subtotal = unitario * item.qtd;
     linhas.push((indice + 1) + ". " + p.nome + " " + p.emoji + (p.sobEncomenda ? " (✨ sob encomenda)" : "") + (ehCombo(p) ? " 🎁COMBO" : ""));
     if(ehCombo(p)){
-      const comps = componentesDoCombo(p, lerProdutos());
-      if(comps.length) linhas.push("   🎁 Vem com: " + comps.map(function(c){ return c.nome; }).join(" + "));
+      if(ehSurpresa(p)){
+        // 🤫 Segredo até pra quem copia o pedido — só o painel sabe!
+        linhas.push("   🤫 Conteúdo secreto (o painel das sócias sabe o que embalar!)");
+      }else{
+        const comps = componentesDoCombo(p, lerProdutos());
+        if(comps.length) linhas.push("   🎁 Vem com: " + comps.map(function(c){ return c.nome; }).join(" + "));
+      }
     }
     linhas.push("   Qtd: " + item.qtd + " | Valor unitário: " + formatarPreco(unitario));
     linhas.push("   Subtotal: " + formatarPreco(subtotal));
