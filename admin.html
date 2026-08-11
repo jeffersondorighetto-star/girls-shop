@@ -239,6 +239,7 @@ label{font-weight:700;display:block;margin:10px 0 4px}
   <section class="aba visivel" id="aba-produtos">
     <div class="resumo-grid" id="resumo"></div>
     <h2 style="margin:14px 0 10px">Seus produtos 🧸</h2>
+    <button class="btn-lilas" style="width:100%;margin-bottom:12px;padding:12px" id="btnNovoCombo">🎁 Criar Caixa Surpresa (combo de 2 ou 3 produtos!)</button>
     <div id="listaProdutos"></div>
   </section>
 
@@ -763,12 +764,43 @@ document.querySelectorAll('#abas button').forEach(btn=>{
    ============================================================ */
 
 // Descobre a "urgência" de cada produto (menor = mais urgente)
+// ------------------------------------------------------------
+// 🎁 COMBO / CAIXA SURPRESA — vários produtinhos num pacote só!
+// O combo NÃO tem estoque próprio: quem manda é o produto com
+// MENOS unidades dentro dele! A "receitinha" viaja escondida na
+// descrição: 🧩combo:ID,ID,ID (a planilha carrega de graça!)
+// ------------------------------------------------------------
+function lerComboIds(p){
+  const m = (p.descricao || '').match(/🧩combo:([\d,]+)/);
+  if(!m) return null;
+  return m[1].split(',').map(Number);
+}
+function ehCombo(p){ return !!lerComboIds(p); }
+function descricaoLimpa(p){
+  return (p.descricao || '').replace(/\s*🧩combo:[\d,]+/g, '').trim();
+}
+function componentesDoCombo(p, lista){
+  const ids = lerComboIds(p) || [];
+  return ids.map(function(id){ return lista.find(function(x){ return x.id === id; }); }).filter(Boolean);
+}
+// Quantas caixinhas dá pra montar? (sob encomenda não limita!)
+function estoqueCombo(p, lista){
+  const comps = componentesDoCombo(p, lista);
+  if(comps.length === 0) return 0;
+  return Math.min.apply(null, comps.map(function(c){ return c.sobEncomenda ? 99 : c.estoque; }));
+}
+// Custo do combo = soma dos custos de hoje dos produtinhos
+function custoCombo(p, lista){
+  return componentesDoCombo(p, lista).reduce(function(s,c){ return s + (c.custo||0); }, 0);
+}
+
 function prioridade(p){
   if(p.status === 'esgotado') return 0;
   if(p.status === 'removido') return 4;
   if(p.status === 'pausado') return 3;
   if(p.sobEncomenda) return 2;       // ✨ sob encomenda não tem estoque pra ficar baixo
-  if(p.estoque <= 3) return 1;       // estoque baixinho
+  const est = ehCombo(p) ? estoqueCombo(p, lerProdutos()) : p.estoque;
+  if(est <= 3) return 1;             // estoque baixinho
   return 2;                           // tudo certo
 }
 
@@ -784,9 +816,12 @@ function renderProdutos(){
   const ativos = produtos.filter(p=> p.status==='disponivel');
   const esgotados = produtos.filter(p=> p.status==='esgotado');
   const pausados = produtos.filter(p=> p.status==='pausado');
-  const itensEstoque = ativos.reduce((s,p)=> s + p.estoque, 0);
+  // 🎁 Combos NÃO entram na contagem de estoque: os produtinhos dentro
+  // deles já foram contados! (senão contava tudo em dobro!)
+  const ativosSemCombo = ativos.filter(p=> !ehCombo(p));
+  const itensEstoque = ativosSemCombo.reduce((s,p)=> s + p.estoque, 0);
   // Lucro potencial: se vender TUDO que tem, quanto sobra?
-  const lucroPotencial = ativos.reduce((s,p)=> s + (precoComDesconto(p) - p.custo) * p.estoque, 0);
+  const lucroPotencial = ativosSemCombo.reduce((s,p)=> s + (precoComDesconto(p) - p.custo) * p.estoque, 0);
 
   document.getElementById('resumo').innerHTML =
     '<div class="resumo-item"><div class="num" style="color:var(--verde)">' + ativos.length + '</div><div class="rot">Ativos ✅</div></div>' +
@@ -806,20 +841,25 @@ function renderProdutos(){
   }
 
   ordenados.forEach(p=>{
-    const lucroUnit = precoComDesconto(p) - p.custo;
-    const margem = p.custo > 0 ? Math.round(lucroUnit / p.custo * 100) : 0;
+    const ehC = ehCombo(p);
+    const custoMostra = ehC ? custoCombo(p, produtos) : p.custo;
+    const estoqueMostra = ehC ? estoqueCombo(p, produtos) : p.estoque;
+    const lucroUnit = precoComDesconto(p) - custoMostra;
+    const margem = custoMostra > 0 ? Math.round(lucroUnit / custoMostra * 100) : 0;
 
     // Escolhe a classe da borda colorida
     let classe = 'produto';
     if(p.status === 'esgotado') classe += ' esgotado';
     else if(p.status === 'pausado' || p.status === 'removido') classe += ' pausado';
-    else if(p.estoque <= 3 && !p.sobEncomenda) classe += ' baixo';
+    else if(estoqueMostra <= 3 && !p.sobEncomenda) classe += ' baixo';
 
     // Selo de status
     let selo = '';
     if(p.status === 'disponivel') selo = p.sobEncomenda
       ? '<span class="selo disponivel">✨ Sob encomenda</span>'
       : '<span class="selo disponivel">✅ À venda</span>';
+    if(ehC && p.status === 'disponivel') selo += ' <span class="selo disponivel" style="background:#FCE7F3;color:#BE185D">🎁 Combo · ' + estoqueMostra + ' caixinhas</span>';
+    if(ehC && p.status === 'disponivel' && estoqueMostra === 0) selo += ' <span class="selo esgotado">😱 Faltam produtinhos</span>';
     if(p.status === 'esgotado') selo = '<span class="selo esgotado">😱 Esgotado</span>';
     if(p.status === 'pausado') selo = '<span class="selo pausado">⏸️ Pausado</span>';
     if(p.status === 'removido') selo = '<span class="selo removido">🗑️ Removido</span>';
@@ -834,12 +874,12 @@ function renderProdutos(){
         '</div>' +
         '<div>' +
           '<div class="prod-nome">' + p.nome + '</div>' +
-          '<div class="prod-sub">' + p.categoria + ' • ' + (p.sobEncomenda ? '✨ sob encomenda' : p.estoque + ' un') + ' • ' + (p.vendas||0) + ' vendidos</div>' +
+          '<div class="prod-sub">' + p.categoria + ' • ' + (ehC ? ('🎁 ' + componentesDoCombo(p, produtos).map(c=> c.emoji + ' ' + c.nome).join(' + ')) : (p.sobEncomenda ? '✨ sob encomenda' : p.estoque + ' un')) + ' • ' + (p.vendas||0) + ' vendidos</div>' +
           selo +
         '</div>' +
       '</div>' +
       '<div class="prod-valores">' +
-        '<div class="v"><b>' + formatarPreco(p.custo) + '</b><span>Custo 💸</span></div>' +
+        '<div class="v"><b>' + formatarPreco(custoMostra) + '</b><span>Custo 💸</span></div>' +
         '<div class="v"><b>' + formatarPreco(precoComDesconto(p)) + '</b><span>Venda 🏷️</span></div>' +
         '<div class="v"><b style="color:' + (lucroUnit >= 0 ? 'var(--verde)' : 'var(--coral)') + '">' + formatarPreco(lucroUnit) + '</b><span>Lucro (' + margem + '%) 💰</span></div>' +
       '</div>' +
@@ -916,8 +956,8 @@ function abrirModalEditar(id){
     '<h3>✏️ Editar "' + p.nome + '"</h3>' +
     '<label>🏷️ Preço de venda (R$)</label>' +
     '<input type="number" id="edVenda" step="0.01" min="0" inputmode="decimal" value="' + (p.precoVenda/100).toFixed(2) + '">' +
-    '<label>📦 Quantidade que vocês têm</label>' +
-    '<input type="number" id="edEstoque" min="0" max="999" step="1" inputmode="numeric" value="' + p.estoque + '">' +
+    '<label>📦 Quantidade que vocês têm' + (ehCombo(p) ? ' — 🎁 o combo calcula sozinho pelos produtinhos!' : '') + '</label>' +
+    '<input type="number" id="edEstoque" min="0" max="999" step="1" inputmode="numeric" value="' + (ehCombo(p) ? estoqueCombo(p, produtos) : p.estoque) + '"' + (ehCombo(p) ? ' disabled style="opacity:.5"' : '') + '>' +
     '<label>🔥 Desconto (%, 0 = sem)</label>' +
     '<input type="number" id="edDesc" min="0" max="90" step="1" inputmode="numeric" value="' + (p.desconto||0) + '">' +
     '<label>📸 Link da foto (opcional — vazio = usa o emoji)</label>' +
@@ -926,7 +966,7 @@ function abrirModalEditar(id){
     '<button type="button" class="btn-cinza" id="edBtnFoto" style="width:100%">📷 Tirar ou escolher foto ✨</button>' +
     '<div id="edFotoPreview" style="margin-top:8px"></div>' +
     '<label>💬 Descrição (opcional)</label>' +
-    '<input type="text" id="edDescricao" maxlength="140" value="' + (p.descricao||'').replace(/"/g,'&quot;') + '">' +
+    '<input type="text" id="edDescricao" maxlength="140" value="' + descricaoLimpa(p).replace(/"/g,'&quot;') + '">' +
     '<div class="modal-botoes">' +
       '<button class="btn-cinza" onclick="fecharModal()">Cancelar</button>' +
       '<button class="btn-lilas" id="edSalvar">💾 Salvar</button>' +
@@ -946,13 +986,18 @@ function abrirModalEditar(id){
     if(desc < 0 || desc > 90){ toast('Desconto só vale de 0 a 90%! 😅'); return; }
     if(foto && foto.indexOf('data:image/') !== 0 && !/^https?:\/\/.+\..+/.test(foto)){ toast('Esse link da foto parece estranho 🤔 Use o botão 📷 ou um link começando com https://'); return; }
     p.precoVenda = venda;
-    p.estoque = estoque;
     p.desconto = desc;
     p.foto = foto;
-    p.descricao = descricao;
-    // Se colocaram estoque num esgotado, ele volta pra vitrine!
-    if(p.status === 'esgotado' && estoque > 0) p.status = 'disponivel';
-    if(estoque === 0 && p.status === 'disponivel') p.status = 'esgotado';
+    // 🎁 A "receitinha" do combo fica guardada no final da descrição — sempre preservada!
+    p.descricao = descricao + (ehCombo(p) ? ' 🧩combo:' + lerComboIds(p).join(',') : '');
+    if(ehCombo(p)){
+      p.estoque = estoqueCombo(p, produtos); // só atualiza o retrato!
+    }else{
+      p.estoque = estoque;
+      // Se colocaram estoque num esgotado, ele volta pra vitrine!
+      if(p.status === 'esgotado' && estoque > 0) p.status = 'disponivel';
+      if(estoque === 0 && p.status === 'disponivel') p.status = 'esgotado';
+    }
     salvarProdutos(produtos);
     gravarLog('✏️ Editou produto', p.nome + ': venda ' + formatarPreco(venda) + ', ' + estoque + ' un');
     fecharModal();
@@ -1378,12 +1423,15 @@ document.getElementById('wizAvancar').onclick = ()=>{
 let carrinhoVenda = {}; // { idDoProduto: quantidade }
 
 // ✨ Sob encomenda pode vender sem estoque em casa (até 10 por venda)
+// 🎁 Combo: o limite é o tanto de caixinhas que dá pra montar!
 function limiteVenda(p){
+  if(ehCombo(p)) return Math.min(10, estoqueCombo(p, lerProdutos()));
   return p.sobEncomenda ? 10 : p.estoque;
 }
 
 function renderVenda(){
-  const produtos = lerProdutos().filter(p=> p.status === 'disponivel' && (p.estoque > 0 || p.sobEncomenda));
+  const todos = lerProdutos();
+  const produtos = todos.filter(p=> p.status === 'disponivel' && limiteVenda(p) > 0);
   const caixa = document.getElementById('vendaProdutos');
   caixa.innerHTML = '';
   if(produtos.length === 0){
@@ -1400,7 +1448,7 @@ function renderVenda(){
       '</div>' +
       '<div style="min-width:0">' +
         '<div style="font-weight:800;font-size:15px;line-height:1.2">' + p.nome + '</div>' +
-        '<div style="font-size:13px;color:var(--texto-suave);font-weight:600">' + formatarPreco(precoComDesconto(p)) + ' • ' + (p.sobEncomenda ? '✨ sob encomenda' : p.estoque + ' un') + '</div>' +
+        '<div style="font-size:13px;color:var(--texto-suave);font-weight:600">' + formatarPreco(precoComDesconto(p)) + ' • ' + (ehCombo(p) ? ('🎁 ' + estoqueCombo(p, todos) + ' caixinhas') : (p.sobEncomenda ? '✨ sob encomenda' : p.estoque + ' un')) + '</div>' +
       '</div>' +
       '<div class="qtd-ctl">' +
         '<button type="button" aria-label="Tirar um">−</button>' +
@@ -1422,7 +1470,7 @@ function renderVenda(){
       }else{
         toast(p.sobEncomenda
           ? 'Máximo de 10 por venda de "' + p.nome + '"! 😅'
-          : 'Só tem ' + p.estoque + ' unidades de "' + p.nome + '"! 😅');
+          : 'Só tem ' + limiteVenda(p) + ' de "' + p.nome + '"! 😅');
       }
     };
     caixa.appendChild(item);
@@ -1440,8 +1488,9 @@ function calcularVenda(){
     if(!p) return;
     let unit = precoComDesconto(p);
     unit = Math.round(unit * (100 - descExtra) / 100); // aplica o desconto extra
+    const custoUnit = ehCombo(p) ? custoCombo(p, produtos) : p.custo; // 🎁 custo ao vivo!
     total += unit * carrinhoVenda[id];
-    lucro += (unit - p.custo) * carrinhoVenda[id];
+    lucro += (unit - custoUnit) * carrinhoVenda[id];
   });
   return { total, lucro };
 }
@@ -1473,6 +1522,27 @@ document.getElementById('btnConfirmarVenda').onclick = ()=>{
     if(!p) return;
     const qtd = carrinhoVenda[id];
     let unit = Math.round(precoComDesconto(p) * (100 - descExtra) / 100);
+    if(ehCombo(p)){
+      // 🎁 VENDEU UMA CAIXINHA: baixa 1 de cada produtinho dentro dela!
+      const comps = componentesDoCombo(p, produtos);
+      const custoUnit = comps.reduce((s,c)=> s + (c.custo||0), 0);
+      itensVenda.push({ produtoId: p.id, nome: p.nome, emoji: p.emoji, qtd: qtd, precoUnit: unit, custoUnit: custoUnit, desconto: descExtra, encomenda: false });
+      p.vendas = (p.vendas||0) + qtd;
+      comps.forEach(c=>{
+        c.vendas = (c.vendas||0) + qtd;
+        if(c.sobEncomenda){
+          itensEncomenda.push({ nome: c.nome + ' (da caixinha 🎁)', qtd: qtd, custo: c.custo });
+        }else{
+          c.estoque -= qtd;
+          if(c.estoque <= 0){
+            c.estoque = 0;
+            c.status = 'esgotado'; // zerou → Troca Rápida aparece na aba Produtos!
+            zerouAlgum = true;
+          }
+        }
+      });
+      return;
+    }
     itensVenda.push({ produtoId: p.id, nome: p.nome, emoji: p.emoji, qtd: qtd, precoUnit: unit, custoUnit: p.custo, desconto: (p.desconto||0) + descExtra, encomenda: !!p.sobEncomenda });
     p.vendas = (p.vendas||0) + qtd;
     if(p.sobEncomenda){
@@ -1486,6 +1556,9 @@ document.getElementById('btnConfirmarVenda').onclick = ()=>{
       }
     }
   });
+  // 🎁 Atualiza o "retrato" do estoque dos combos (o site recalcula sempre,
+  // mas a planilha gosta de ver um número fresquinho!)
+  produtos.forEach(pp=>{ if(ehCombo(pp)) pp.estoque = estoqueCombo(pp, produtos); });
   salvarProdutos(produtos);
 
   // Grava a venda (o Dashboard lê daqui!)
@@ -1570,7 +1643,16 @@ function desfazerVenda(idVenda){
     venda.itens.forEach(item=>{
       const p = produtos.find(x=> x.id === item.produtoId);
       if(p && p.status !== 'removido'){
-        if(!p.sobEncomenda) p.estoque += item.qtd; // devolve as unidades (encomenda não tem estoque!)
+        if(ehCombo(p)){
+          // 🎁 Devolve 1 de cada produtinho da caixinha!
+          componentesDoCombo(p, produtos).forEach(c=>{
+            if(c.status !== 'removido'){
+              if(!c.sobEncomenda) c.estoque += item.qtd;
+              c.vendas = Math.max(0, (c.vendas||0) - item.qtd);
+              if(c.status === 'esgotado' && c.estoque > 0) c.status = 'disponivel';
+            }
+          });
+        }else if(!p.sobEncomenda) p.estoque += item.qtd; // devolve as unidades (encomenda não tem estoque!)
         p.vendas = Math.max(0, (p.vendas||0) - item.qtd);
         if(p.status === 'esgotado' && p.estoque > 0) p.status = 'disponivel';
       }
@@ -1886,6 +1968,106 @@ document.getElementById('btnSair').onclick = ()=>{
   sessionStorage.removeItem('girlsShop_sessao');
   location.reload();
 };
+
+/* ============================================================
+   🎁 CAIXA SURPRESA (COMBO) — 2 ou 3 produtinhos, 1 preço só!
+   O combo não tem estoque próprio: dá pra montar tantas caixinhas
+   quanto o produto MAIS RARO dentro dele. Vendeu 1 combo =
+   baixa 1 de cada produtinho. Brilhante e sem desperdício! ✨
+   ============================================================ */
+function abrirNovoCombo(){
+  const produtos = lerProdutos();
+  const candidatos = produtos.filter(p=> p.status !== 'removido' && !ehCombo(p));
+  if(candidatos.length < 2){ toast('Cadastrem pelo menos 2 produtos pra montar uma caixinha! 🎁'); return; }
+  abrirModal(
+    '<h3>🎁 Montar Caixa Surpresa</h3>' +
+    '<p style="color:var(--texto-suave);font-weight:600">Escolham 2 ou 3 produtinhos pra viajarem juntos num pacote só com preço especial!</p>' +
+    '<div style="max-height:220px;overflow:auto;margin:8px 0">' +
+      candidatos.map(p=>
+        '<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-bottom:1px solid #F3E8FF;font-weight:700;cursor:pointer">' +
+          '<input type="checkbox" class="comboCheck" value="' + p.id + '" style="width:20px;height:20px">' +
+          '<span>' + p.emoji + ' ' + p.nome + '</span>' +
+          '<span style="margin-left:auto;font-size:12px;color:var(--texto-suave)">' + formatarPreco(precoComDesconto(p)) + '</span>' +
+        '</label>').join('') +
+    '</div>' +
+    '<label>🏷️ Nome da caixinha</label>' +
+    '<input type="text" id="comboNome" maxlength="40" placeholder="Ex: Caixa Surpresa das Amigas">' +
+    '<div id="comboResumo" style="background:#FDF2F8;border-radius:12px;padding:10px;margin:8px 0;font-weight:700;font-size:14px">Escolham os produtinhos pra ver a mágica! ✨</div>' +
+    '<label>💰 Preço da caixinha (R$) — sugerimos 10% de descontinho!</label>' +
+    '<input type="number" id="comboPreco" step="0.01" min="0" inputmode="decimal">' +
+    '<label>💬 Descrição (opcional)</label>' +
+    '<input type="text" id="comboDesc" maxlength="100" placeholder="Ex: Um mimo completo pra sua best!">' +
+    '<div class="modal-botoes">' +
+      '<button class="btn-cinza" onclick="fecharModal()">Cancelar</button>' +
+      '<button class="btn-lilas" id="comboSalvar">🎁 Criar caixinha!</button>' +
+    '</div>'
+  );
+  const selecionados = ()=> Array.from(document.querySelectorAll('.comboCheck:checked')).map(c=> Number(c.value));
+  function atualizarResumoCombo(){
+    const ids = selecionados();
+    const comps = produtos.filter(p=> ids.indexOf(p.id) >= 0);
+    if(ids.length < 2){
+      document.getElementById('comboResumo').textContent = 'Escolham 2 ou 3 produtinhos! ✨';
+      return;
+    }
+    if(ids.length > 3){
+      document.getElementById('comboResumo').textContent = 'Ops! No máximo 3 produtinhos por caixinha 😅';
+      return;
+    }
+    const caixinhas = Math.min.apply(null, comps.map(c=> c.sobEncomenda ? 99 : c.estoque));
+    const somaVenda = comps.reduce((s,c)=> s + precoComDesconto(c), 0);
+    const somaCusto = comps.reduce((s,c)=> s + c.custo, 0);
+    const sugestao = Math.round(somaVenda * 0.9);
+    const campoPreco = document.getElementById('comboPreco');
+    if(!campoPreco.value) campoPreco.value = (sugestao/100).toFixed(2);
+    const precoDigitado = paraCentavos(campoPreco.value) || sugestao;
+    document.getElementById('comboResumo').innerHTML =
+      '📦 Dá pra montar <b>' + caixinhas + ' caixinhas</b> com o estoque de hoje<br>' +
+      '💸 Custo dos produtinhos: ' + formatarPreco(somaCusto) + '<br>' +
+      '🏷️ Separados: ' + formatarPreco(somaVenda) + ' → <b style="color:#BE185D">Caixinha: ' + formatarPreco(precoDigitado) + '</b><br>' +
+      '💰 Lucro por caixinha: ' + formatarPreco(precoDigitado - somaCusto);
+  }
+  document.querySelectorAll('.comboCheck').forEach(c=> c.addEventListener('change', atualizarResumoCombo));
+  document.getElementById('comboPreco').addEventListener('input', atualizarResumoCombo);
+
+  document.getElementById('comboSalvar').onclick = ()=>{
+    const ids = selecionados();
+    if(ids.length < 2 || ids.length > 3){ toast('Escolham 2 ou 3 produtinhos! 🎁'); return; }
+    const nome = document.getElementById('comboNome').value.trim() || 'Caixa Surpresa';
+    const preco = paraCentavos(document.getElementById('comboPreco').value);
+    if(preco === null || preco <= 0){ toast('Qual o preço da caixinha? 🤗'); return; }
+    const comps = produtos.filter(p=> ids.indexOf(p.id) >= 0);
+    const somaCusto = comps.reduce((s,c)=> s + c.custo, 0);
+    if(preco < somaCusto){ toast('😱 Esse preço é menor que o custo! Aí é prejuízo...'); return; }
+    const caixinhas = Math.min.apply(null, comps.map(c=> c.sobEncomenda ? 99 : c.estoque));
+    const descTexto = document.getElementById('comboDesc').value.trim();
+    const novo = {
+      id: Date.now(), // carimbo de tempo = id único
+      nome: nome,
+      emoji: '🎁',
+      categoria: 'Combos',
+      custo: somaCusto,
+      precoVenda: preco,
+      desconto: 0,
+      estoque: caixinhas, // retrato de hoje — o site recalcula sempre!
+      cor: 'linear-gradient(135deg,#FBCFE8,#EC4899)',
+      status: 'disponivel',
+      vendas: 0,
+      foto: '',
+      descricao: (descTexto ? descTexto + ' ' : '') + '🧩combo:' + ids.join(',')
+    };
+    produtos.push(novo);
+    salvarProdutos(produtos);
+    gravarLog('🎁 Criou combo', nome + ': ' + comps.map(c=> c.nome).join(' + ') + ' por ' + formatarPreco(preco));
+    fecharModal();
+    soltarConfete(80);
+    renderTudo();
+    toast('Caixinha na vitrine! 🎁✨');
+    lunaDiz('Combo é estratégia de loja grande: aumenta o ticket médio E gira o estoque parado! 📈');
+  };
+}
+// Liga o botão 🎁 da aba Produtos
+document.getElementById('btnNovoCombo').onclick = abrirNovoCombo;
 
 /* ============================================================
    ☁️ NUVEM — a Planilha Viva!
