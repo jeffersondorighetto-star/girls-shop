@@ -2351,8 +2351,20 @@ function marcarPendente(erro){
 
 // Manda a fila pra nuvem, um evento de cada vez, na ordem certinha.
 // Se um falhar, para tudo e guarda o resto pra próxima tentativa 🪂
+// 🔒 TRANCA DA FILA: só UM envio por vez! Se alguém chamar enquanto
+// a fila está andando, a gente marca pra rodar de novo no final —
+// sem isso, dois envios juntos podiam pular um evento sem mandar!
+let filaTrabalhando = false;
+let filaChamarDeNovo = false;
 function enviarFila(depois){
   if(!temNuvem()){ if(depois) depois(false); return; }
+  if(filaTrabalhando){ filaChamarDeNovo = true; if(depois) depois(true); return; }
+  filaTrabalhando = true;
+  const terminar = function(ok){
+    filaTrabalhando = false;
+    if(filaChamarDeNovo){ filaChamarDeNovo = false; enviarFila(depois); return; }
+    if(depois) depois(ok);
+  };
   const passo = function(){
     const fila = lerFila();
     if(fila.length === 0){
@@ -2360,7 +2372,7 @@ function enviarFila(depois){
       localStorage.removeItem('girlsShop_nuvemUltimoErro');
       localStorage.setItem('girlsShop_nuvemUltimaSync', String(Date.now()));
       renderStatusSync();
-      if(depois) depois(true);
+      terminar(true);
       return;
     }
     postNuvem(fila[0]).then(d=>{
@@ -2374,11 +2386,11 @@ function enviarFila(depois){
         passo();
       }else{
         marcarPendente((d && d.erro) ? String(d.erro) : 'resposta estranha da nuvem');
-        if(depois) depois(false);
+        terminar(false);
       }
     }).catch(()=>{
       marcarPendente('sem internet ou link da nuvem errado');
-      if(depois) depois(false);
+      terminar(false);
     });
   };
   passo();

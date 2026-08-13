@@ -1009,6 +1009,9 @@ function puxarDaNuvem(){
 try{
   desenhar();
   puxarDaNuvem(); // ☁️ checa se a nuvem tem novidades
+  // 🔄 e segue checando: a cada 60 segundinhos e quando a aba volta pro foco!
+  setInterval(function(){ if(!document.hidden) puxarDaNuvem(); }, 60000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) puxarDaNuvem(); });
 }catch(e){
   mostrarErro('Ops! Algo não ficou certo. Vamos tentar de novo? 🤗');
 }
