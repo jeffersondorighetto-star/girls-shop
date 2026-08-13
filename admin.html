@@ -235,6 +235,11 @@ label{font-weight:700;display:block;margin:10px 0 4px}
     <button data-aba="config">⚙️ Configurações</button>
   </nav>
 
+  <!-- 🌡️ Termômetro da nuvem: a saúde da sincronia sempre visível!
+       ☁️✓ tudo lá • ⏳ N coisinhas subindo • ⚠️ N precisam de ajuda.
+       Tocar = abre ⚙️ e sincroniza na hora! -->
+  <div id="badgeSync" title="Saúde da nuvem — toque pra sincronizar" style="display:none;position:fixed;bottom:12px;right:12px;z-index:70;padding:7px 13px;border-radius:999px;font-size:12.5px;font-weight:900;box-shadow:0 4px 14px rgba(0,0,0,.18);cursor:pointer;user-select:none">☁️…</div>
+
   <!-- 📦 ABA PRODUTOS -->
   <section class="aba visivel" id="aba-produtos">
     <div class="resumo-grid" id="resumo"></div>
@@ -2384,11 +2389,53 @@ function enviarFila(depois){
         fila.shift();
         salvarFila(fila);
         passo();
-      }else{
-        marcarPendente((d && d.erro) ? String(d.erro) : 'resposta estranha da nuvem');
-        terminar(false);
+        return;
       }
+      // 🩹 AUTO-CONSERTO: a nuvem disse "acao desconhecida" e este aparelho tem
+      // um link GUARDADO (não é o oficial)? O link é velhinho — implantação
+      // congelada! Tenta o link OFICIAL: se funcionar, adota pra sempre ✨
+      if(d && String(d.erro || '').indexOf('acao desconhecida') >= 0 && (lerConfig().linkNuvem || '').trim()){
+        fetch(LINK_NUVEM_PADRAO, { method:'POST', headers:{ 'Content-Type':'text/plain' }, body: JSON.stringify(fila[0]) })
+          .then(r=> r.json()).then(d2=>{
+            if(d2 && d2.ok){
+              const cfg = lerConfig();
+              cfg.linkNuvem = ''; // volta pro oficial do arquiteto!
+              salvarConfigLocal(cfg);
+              versaoNuvem = d2.versao || versaoNuvem;
+              toast('🔧 O link da nuvem estava velhinho… arrumei sozinha! ✨');
+              fila.shift();
+              salvarFila(fila);
+              passo();
+            }else{
+              marcarPendente('o link guardado E o oficial recusaram — chame o arquiteto!');
+              terminar(false);
+            }
+          }).catch(()=>{
+            marcarPendente('sem internet ou link da nuvem errado');
+            terminar(false);
+          });
+        return;
+      }
+      // ☠️ EVENTO VENENOSO: a nuvem recusou 3 vezes? Vai pra caixinha de ajuda
+      // e a fila ANDA — um evento doente nunca mais segura os saudáveis!
+      const cabeca = fila[0];
+      cabeca._tentativas = (cabeca._tentativas || 0) + 1;
+      if(cabeca._tentativas >= 3){
+        fila.shift();
+        salvarFila(fila);
+        let falhados = [];
+        try{ falhados = JSON.parse(localStorage.getItem('girlsShop_filaFalhados')) || []; }catch(e){}
+        falhados.push(cabeca);
+        try{ localStorage.setItem('girlsShop_filaFalhados', JSON.stringify(falhados)); }catch(e){}
+        marcarPendente('1 coisinha (' + (cabeca.acao || '?') + ') travou 3x e foi pra caixinha de ajuda — as demais seguem! 🚀');
+        passo(); // a fila anda!
+        return;
+      }
+      salvarFila(fila); // guarda a contagem de tentativas
+      marcarPendente((d && d.erro) ? String(d.erro) : 'resposta estranha da nuvem');
+      terminar(false);
     }).catch(()=>{
+      // 📡 Sem internet NÃO envenena: para quietinho e tenta na próxima 🪂
       marcarPendente('sem internet ou link da nuvem errado');
       terminar(false);
     });
@@ -2406,6 +2453,9 @@ function tirarRetrato(lista){
   lista.forEach(p=>{ vitrine[p.id] = assinaturaVitrine(p); numeros[p.id] = (p.estoque||0) + '/' + (p.vendas||0); });
   return { vitrine: vitrine, numeros: numeros };
 }
+// 📸 RETRATO DE ABERTURA: tirado na hora que o painel abre, ANTES de qualquer
+// mudança — assim nem a mudança mais rapidinha passa batida sem virar evento!
+retratoProdutos = tirarRetrato(lerProdutos());
 
 // 🧮 Monta os ajustes de estoque de uma venda (pra auto-cura reenviar certinho!)
 function ajustesDaVenda(v, produtos){
@@ -2496,9 +2546,10 @@ function puxarDaNuvem(depois){
       }
 
       const fila = lerFila();
-      const produtosNaFila = {}, vendasNaFila = {};
+      const produtosNaFila = {}, vendasNaFila = {}, apagandoNaFila = {};
       fila.forEach(ev=>{
         if(ev.acao === 'produto' && ev.produto && !ev.produto.apagar) produtosNaFila[ev.produto.id] = true;
+        if(ev.acao === 'produto' && ev.produto && ev.produto.apagar) apagandoNaFila[ev.produto.id] = true; // ⚰️ já vai sair: NÃO ressuscita!
         if(ev.acao === 'venda' && ev.venda) vendasNaFila[ev.venda.id] = true;
       });
 
@@ -2542,8 +2593,9 @@ function puxarDaNuvem(depois){
         if(d.compras !== undefined) salvarComprasLocal(d.compras);
       }
 
-      // 📦 Adota os produtos da nuvem + mantém os locais que ainda vão subir
-      const adotados = (d.produtos || []).slice();
+      // 📦 Adota os produtos da nuvem (MENOS os que já estão na fila pra apagar:
+      // esses estão de saída — ressuscitar, NUNCA MAIS! ⚰️🚫)
+      const adotados = (d.produtos || []).filter(p=> !apagandoNaFila[p.id]);
       locais.forEach(p=>{ if(!idsNuvem[p.id]) adotados.push(p); });
       salvarProdutosLocal(adotados);
       retratoProdutos = tirarRetrato(adotados);
@@ -2614,7 +2666,40 @@ function renderStatusSync(){
   el.textContent += ' ☁️ Nuvem: …' + urlNuvem().slice(-16);
   if(versaoNuvem > 0) el.textContent += ' (v' + versaoNuvem + ' ✨)';
   else if(nuvemRespondeu) el.textContent += ' (⚠️ v3 antiga — o arquiteto precisa atualizar o Apps Script!)';
+  // 📮 Caixinha de ajuda (eventos que travaram 3x)
+  let falhados = 0;
+  try{ falhados = (JSON.parse(localStorage.getItem('girlsShop_filaFalhados')) || []).length; }catch(e){}
+  if(falhados > 0) el.textContent += ' 📮 ' + falhados + ' coisinha(s) na caixinha de ajuda — chame o arquiteto!';
+
+  // 🌡️ Termômetro da nuvem: visível em TODAS as telas do painel!
+  const badge = document.getElementById('badgeSync');
+  if(badge){
+    badge.style.display = 'block';
+    if(fila > 0){
+      badge.textContent = '⏳ ' + fila;
+      badge.style.background = '#FEF3C7'; badge.style.color = '#92400E';
+    }else if(falhados > 0){
+      badge.textContent = '⚠️ ' + falhados;
+      badge.style.background = '#FEE2E2'; badge.style.color = '#991B1B';
+    }else if(quando){
+      badge.textContent = '☁️✓';
+      badge.style.background = '#D1FAE5'; badge.style.color = '#065F46';
+    }else{
+      badge.textContent = '☁️…';
+      badge.style.background = '#E0E7FF'; badge.style.color = '#3730A3';
+    }
+  }
 }
+
+// 🌡️ Tocar no termômetro = abrir ⚙️ + sincronizar na hora!
+(function(){
+  const badge = document.getElementById('badgeSync');
+  if(badge) badge.onclick = ()=>{
+    const b = document.querySelector('[data-aba="config"]');
+    if(b) b.click();
+    sincronizarTudo(true);
+  };
+})();
 
 /* ============================================================
    📷 FOTO MÁGICA — tira/escolhe a foto e o site faz TODO o resto!
